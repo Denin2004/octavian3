@@ -1,0 +1,117 @@
+@font-size-base: 13px;
+
+@import "~antd/dist/antd.less";
+
+.flex {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+}
+
+.mfw-align-left {
+    text-align: left;
+}
+
+.mfw-align-right {
+    text-align: right;
+}
+
+.virtual-table .ant-table-container:before,
+  .virtual-table .ant-table-container:after {
+    display: none;
+  }
+
+.virtual-table-cell {
+    box-sizing: border-box;
+    padding: 16px;
+    border-bottom: 1px solid #e8e8e8;
+    background: #FFF;
+}
+
+[data-theme="dark"]  .virtual-table-cell {
+    box-sizing: border-box;
+    padding: 16px;
+    border-bottom: 1px solid #303030;
+    background: #141414;
+}
+
+.mfw-ant-table-row-expand-icon::before {
+    top: 8px;
+}
+
+.ant-table-wrapper {
+  height: 100%;
+
+  .ant-spin-nested-loading {
+    height: 100%;
+
+    .ant-spin-container {
+      height: 100%;
+      display: flex;
+      flex-flow: column nowrap;
+
+      .ant-table {
+        flex: auto;
+        overflow: hidden;
+
+        .ant-table-container {
+          height: 100%;
+          display: flex;
+          flex-flow: column nowrap;
+
+          .ant-table-header {
+            flex: none;
+          }
+
+          .ant-table-body {
+            flex: auto;
+            overflow: scroll;
+          }
+        }
+      }
+
+      .ant-table-pagination {
+        flex: none;
+      }
+    }
+  }
+}
+
+.mfw-main-menu {
+    .ant-menu-item {
+        height: @menu-item-height*1.5;
+        padding-left: 0;
+        padding-right: 0;
+        text-align: center;
+    }
+
+    .ant-menu-submenu {
+        .ant-menu-submenu-title {
+            height: @menu-item-height*1.5;
+            padding-left: 0;
+            padding-right: 0;
+            text-align: center;
+        }
+    }
+
+    .ant-menu-title-content {
+        line-height: @font-size-base*0.8;
+        font-size: @font-size-base*0.8;
+    }
+}
+
+.mfw-main-submenu {
+    .ant-menu-sub {
+        .ant-menu-item {
+            height: @menu-item-height*0.7;
+            line-height: @font-size-base;
+            font-size: @font-size-base;
+            padding-top: @padding-xs;
+        }
+    }
+}

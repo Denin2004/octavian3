@@ -1,0 +1,17 @@
+dashboard:
+    path: /
+    controller: App\Controller\Application::index
+
+login:
+    path: /login
+    controller: App\Controller\Application::index
+
+login_check:
+    path: /login_check
+
+logout:
+    path: /logout
+    
+report:
+    resource: 'routes/report.yaml'
+    prefix: /report

@@ -1,0 +1,178 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+
+# Put parameters here that don't need to change on each machine where the app is deployed
+# https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
+parameters:
+    myACP:
+        driverClass: 'App\Services\MyACP\MyACPDriver'
+        host: null
+        port: 1251
+        dbname: '%env(resolve:DATABASE_NAME)%'
+        user: 'wwwsrv'
+        password: '7osd8h'
+        servicename: 'oci8'
+        service: true
+        charset: 'AL32UTF8'
+        persistent: true
+    locale: '%env(resolve:LOCALE)%'
+    version: 1.0.0
+
+
+services:
+    # default configuration for services in *this* file
+    _defaults:
+        autowire: true      # Automatically injects dependencies in your services.
+        autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    # makes classes in src/ available to be used as services
+    # this creates a service per class whose id is the fully-qualified class name
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+            - '../src/Tests/'
+
+    # controllers are imported separately to make sure services can be injected
+    # as action arguments even if you don't extend any base controller class
+    App\Controller\:
+        resource: '../src/Controller/'
+        tags: ['controller.service_arguments']
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+    
+    App\Controller\CommonController:
+        class: App\Controller\Common
+        arguments: ['@App\Services\MyACP\MyACP']
+        tags: ['controller.service_arguments']
+        public: true
+        
+    App\Entity\:
+        resource: '../src/Entity/'
+        tags: ['controller.service_arguments']
+
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+
+    App\Services\MyACP\MyACP:
+        class: 'App\Services\MyACP\MyACP'
+        arguments: ['%myACP%', '@session', '@App\Services\SiteConfig\SiteConfig']
+        public: true
+
+    admin.services.authentication_handler:
+        class: App\Services\Authentication\AuthenticationHandler
+        arguments: ['@router', '@session', '@security.password_encoder']
+        public: true
+
+    app.user_provider:
+        class: App\Services\User\UserProvider
+        arguments: ['@request_stack', '@App\Services\MyACP\MyACP', '@security.password_encoder', '@App\Services\Security\Access', '@App\Entity\Users']
+
+    App\Services\SiteConfig\SiteConfig:
+        class: App\Services\SiteConfig\SiteConfig
+        arguments: ['%kernel.project_dir%']
+        public: true
+
+    App\Services\Security\Access:
+        class: App\Services\Security\Access
+        arguments: ['@twig', '@App\Entity\Users', '@App\Entity\WebRoles']
+        public: true
+        
+    app.voter:
+        class: App\Services\Security\RouteVoter
+        tags: [security.voter]
+        public: false          
+        
+    app.access.denied.controller:
+        class: App\Services\Security\DeniedHandler
+        arguments: ['@router']
+        
+    App\Services\Report\Report:
+        class: App\Services\Report\Report
+        public: true
+        arguments: ['@App\Services\MyACP\MyACP', '@App\Services\SiteConfig\SiteConfig', '@request_stack', '@App\Services\RPN\RPNService', '@router', '@twig', '@form.factory']
+
+    App\Form\React\ReactForm:
+        class: App\Form\React\ReactForm
+        arguments: ['@security.csrf.token_manager']
+
+    App\Form\Report\Query:
+        class: App\Form\Report\Query
+        arguments: ['@service_container', '@security.csrf.token_manager']
+        
+    report.MfwDate:
+        class: App\Services\Report\Query\MfwDate
+        arguments: ['@App\Services\SiteConfig\SiteConfig', '@request_stack']
+        public: true
+
+    report.MfwDateTime:
+        class: App\Services\Report\Query\MfwDateTime
+        public: true
+
+    report.MfwPeriod:
+        class: App\Services\Report\Query\MfwPeriod
+        arguments: ['@App\Services\SiteConfig\SiteConfig', '@router', '@request_stack']
+        public: true
+
+    report.MfwPlayer:
+        class: App\Services\Report\Query\MfwPlayer
+        arguments: ['@router', '@translator']
+        public: true
+
+    report.MfwText:
+        class: App\Services\Report\Query\MfwText
+        public: true
+
+    report.MfwPercent:
+        class: App\Services\Report\Query\MfwPercent
+        public: true
+
+    report.MfwHidden:
+        class: App\Services\Report\Query\MfwHidden
+        public: true
+
+    report.MfwCheckbox:
+        class: App\Services\Report\Query\MfwCheckbox
+        public: true
+
+    report.MfwLocation:
+        class: App\Services\Report\Query\MfwLocation
+        public: true
+
+    report.MfwJackpot:
+        class: App\Services\Report\Query\MfwJackpot
+        public: true
+
+    report.MfwCurrency:
+        class: App\Services\Report\Query\MfwCurrency
+        public: true
+
+    report.MfwCardsType:
+        class: App\Services\Report\Query\MfwCardsType
+        public: true
+
+    report.MfwChoice:
+        class: App\Services\Report\Query\MfwChoice
+        arguments: ['@App\Services\MyACP\MyACP']
+        public: true
+
+    report.MfwSelInput:
+        class: App\Services\Report\Query\MfwSelInput
+        public: true
+
+    report.MfwButton:
+        class: App\Services\Report\Query\MfwButton
+        arguments: ['@router']
+        public: true
+
+    report.MfwReportInfo:
+        class: App\Services\Report\Query\MfwReportInfo
+        arguments: ['@App\Services\Report\Report']
+        public: true
+        
+    App\Form\React\ReactTextType:
+        class: App\Form\React\ReactTextType
+        tags: [form.type]        

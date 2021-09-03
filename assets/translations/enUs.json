@@ -1,0 +1,20 @@
+{
+    "login": {
+        "_": "Login",
+        "password": "Password",
+        "errors": {
+            "login_message": "Login",
+            "password_message":  "Введите пароль",
+            "password_blank": "Password is blank",
+            "user_name_blank": "Login is blank"
+        }
+    },
+    "security": {
+        "error": {
+            "403": "Access denied"
+        }
+    },
+    "common": {
+        "loading": "Loading..."
+    }
+}

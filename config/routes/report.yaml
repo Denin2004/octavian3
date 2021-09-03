@@ -1,0 +1,28 @@
+reportPage:
+    path: /page/{id}
+    controller: App\Controller\Application::index
+    requirements:
+        id: \d+
+    defaults:
+        id: -1
+        target: page
+    methods: [GET]
+
+reportMetaData:
+    path: /metadata/{id}
+    controller: App\Controller\Report\Main::metaData
+    requirements:
+        id: \d+
+    defaults:
+        id: -1
+    methods: [GET]
+
+reportData:
+    path: /data/{id}/{uniqid}/{datatable}
+    controller: App\Controller\Report\Main::data
+    methods: [POST]
+    defaults:
+        datatable: 0
+    requirements:
+        id: \d+
+        datatable: 0|1

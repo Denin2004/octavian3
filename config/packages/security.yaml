@@ -1,0 +1,45 @@
+security:
+    # https://symfony.com/doc/current/security.html#where-do-users-come-from-user-providers
+    providers:
+        cms:
+            id: app.user_provider
+        
+    firewalls:
+        dev:
+            pattern: ^/(_(profiler|wdt)|css|images|js)/
+            security: false
+        cms:
+            pattern: /.*
+            anonymous: true
+            form_login:
+                login_path: login
+                check_path: login_check
+                provider: cms
+                success_handler: App\Services\Authentication\AuthenticationHandler
+                failure_handler: App\Services\Authentication\AuthenticationHandler
+            logout:
+                path: /logout
+                target: /login
+            
+        main:
+            anonymous: ~
+            # activate different ways to authenticate
+            # https://symfony.com/doc/current/security.html#firewalls-authentication
+
+            # https://symfony.com/doc/current/security/impersonating_user.html
+            # switch_user: true
+
+    access_decision_manager:
+        strategy: unanimous
+
+    encoders:
+        App\Services\User\WebserviceUser:
+            algorithm: bcrypt
+            cost: 12
+
+    # Easy way to control access for large sections of your site
+    # Note: Only the *first* access control that matches will be used
+    access_control:
+        - { path: ^/login, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/login_check, roles: IS_AUTHENTICATED_ANONYMOUSLY }
+        - { path: ^/*, roles: IS_AUTHENTICATED_REMEMBERED }

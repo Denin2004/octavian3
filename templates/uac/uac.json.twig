@@ -1,0 +1,33 @@
+{
+    "version": 1,
+    "routes": {
+        "common.access": {
+            "common.start_dashboard": {
+                "access": true,
+                "routes": [
+                    "dashboard",
+                    "getGamingTime",
+                    "systemSearchData",
+                    "systemSearchShow",
+                    "reportRefresh",
+                    "systemSetLocale",
+                    "locationStations",
+                    "reportViewPlayer",
+                    "reportSetPlayer",
+                    "appConfig"
+                ]
+            }
+        },    
+        "report.all": {
+        {% for rep in reports %}
+            "{{rep.NAME}}": {
+                "access": {{rep.ROLE_ID == null ? 'false' : 'true'}},
+                "routes": ["{{rep.ID}}"],
+                "typeNode": "report"
+            }
+            {{loop.last ? '' : ','}}
+        {% endfor %}
+        }
+    },
+    "widgets": []
+}
