@@ -12,6 +12,11 @@ login_check:
 logout:
     path: /logout
     
+appConfig:
+    path: /config
+    controller: App\Controller\Application::config
+    methods: GET
+    
 report:
     resource: 'routes/report.yaml'
     prefix: /report

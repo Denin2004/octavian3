@@ -17,7 +17,6 @@ class ReactForm extends AbstractType
 
     public function buildView(FormView $view, FormInterface $form, array $options)
     {
-        dump($form, $view, $form->getName());
         $view->vars['reactView'] = $this->reactView;
     }
 }

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no" />
+        <link rel="icon" type="image/png" href="/favicon.png" />
+        {% block stylesheets %}
+            {{ encore_entry_link_tags('mobileApp') }}
+        {% endblock %}
+    </head>
+    <body>
+        <div id="root"></div>
+        <script src="/js/fastclick.js"></script>
+        <script>
+            if ('addEventListener' in document) {
+                document.addEventListener('DOMContentLoaded', function() {
+                    FastClick.attach(document.body);
+                }, false);
+            }
+            if(!window.Promise) {
+                document.writeln('<script src="/js/es6-promise.min.js"'+'>'+'<'+'/'+'script>');
+            }
+        </script>        
+        <script type="text/javascript">
+            window.mfwApp = {
+                locale: "{{ locale }}"
+            }
+        </script>
+        {{ encore_entry_script_tags('mobileApp') }}
+    </body>
+</html>

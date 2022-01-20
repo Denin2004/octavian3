@@ -11,6 +11,7 @@ import { withTranslation } from 'react-i18next';
 import axios from 'axios';
 
 import Report from '@app/web/Report';
+import Test from '@app/web/Test';
 
 class Main extends Component {
     constructor(props){
@@ -19,6 +20,32 @@ class Main extends Component {
     }
     
     componentDidMount() {
+        axios.get(
+            '/config',
+            {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }
+        ).then(res => {
+            if (res.data.success) {
+                window.mfwApp.urls = JSON.parse(res.data.urls);
+                window.mfwApp.user = res.data.user;
+                this.setState({
+                    loading: false,
+                    userName: res.data.user.name,
+                    userID: res.data.user.id
+                });
+            } else {
+                message.error(this.props.t(res.data.error));
+            }
+        }).catch(error => {
+            if (error.response && error.response.data) {
+                message.error(this.props.t(error.response.data.error));
+            } else {
+                message.error(error.toString());
+            }
+        });        
     }
 
     render() {
@@ -42,7 +69,7 @@ class Main extends Component {
                 </Layout.Sider>
                 <Layout.Content>
                     <Switch>
-                        <Route path="/report/page/:id(\d+)" component={Report} />
+                        <Route path="/report/page/:id(\d+)" component={Test} />
                     </Switch>                
                 </Layout.Content>
             </Layout>
