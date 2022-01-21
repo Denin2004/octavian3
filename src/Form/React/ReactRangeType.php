@@ -13,7 +13,7 @@ use Symfony\Component\Form\CallbackTransformer;
 
 use App\Services\SiteConfig\SiteConfig;
 
-class ReactDateType extends AbstractType
+class ReactRangeType extends AbstractType
 {
     private $siteConfig;
 
@@ -34,36 +34,55 @@ class ReactDateType extends AbstractType
                 return $value;
             },
             function ($value) {
-                $dt = new \DateTime($value);
-                $value = !$dt ? $value : $dt->format($this->siteConfig->get('php_date_format'));
+                if (isset($value[0])) {
+                    $dt = new \DateTime($value[0]);
+                    $value[0] = !$dt ? $value[0] : $dt->format($this->siteConfig->get('php_date_format'));
+                }
+                if (isset($value[1])) {
+                    $dt = new \DateTime($value[1]);
+                    $value[1] = !$dt ? $value[1] : $dt->format($this->siteConfig->get('php_date_format'));
+                }
                 return $value;
             }
         ));
+        if ($options['request']) {
+            $builder->add('0', HiddenType::class)
+                ->add('1', HiddenType::class);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver)
     {
         $resolver->setDefaults([
-            'constraints' => [ new Callback(['callback' => [$this, 'checkDate']])],
-            'request' => false
+            'constraints' => [ new Callback(['callback' => [$this, 'checkRange']])],
+            'request' => false,
+            'compound' => true
         ]);
     }
 
     public function buildView(FormView $view, FormInterface $form, array $options)
     {
         $view->parent->vars['react'][$view->vars['name']] = [
-            'type' => 'mfw-date',
+            'type' => 'mfw-range',
             'value' => $view->vars['value'],
             'full_name' => $view->vars['full_name']
         ];
     }
 
-    public function checkDate($value, ExecutionContextInterface $context)
+    public function checkRange($value, ExecutionContextInterface $context)
     {
-        $dt = new \DateTime($value);
-        if (!$dt) {
-            $context->buildViolation('calendar.errors.date_format')->addViolation();
+        if (count($value) != 2) {
+            $context->buildViolation('calendar.errors.range_format')->addViolation();
             return;
+        }
+        $dtFrom = new \DateTime($value[0]);
+        $dtTo = new \DateTime($value[1]);
+        if (!$dtFrom || !$dtTo) {
+            $context->buildViolation('calendar.errors.range_format')->addViolation();
+            return;
+        }
+        if ($dtFrom > $dtTo) {
+            $context->buildViolation('calendar.errors.range')->addViolation();
         }
         return;
     }

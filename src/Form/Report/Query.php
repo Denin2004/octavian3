@@ -4,51 +4,63 @@ namespace App\Form\Report;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 
 use App\Form\React\ReactForm;
+use App\Form\React\ReactHiddenType;
+use App\Form\React\ReactTextType;
+use App\Form\React\ReactRangeType;
+use App\Form\Report\LocationView;
+use App\Form\Report\CurrencyView;
 
 class Query extends ReactForm
 {
-
-    protected $container;
-    protected $reactView;
-
-    public function __construct(ContainerInterface $container, CsrfTokenManagerInterface $tokenManager)
-    {
-        parent::__construct($tokenManager);
-        $this->container = $container;
-    }
+    const fieldsMap = [
+        'MfwHidden' => [
+            'view' => ReactHiddenType::class,
+            'request' => HiddenType::class
+        ],
+        'MfwText' => [
+            'view' => ReactTextType::class,
+            'request' => TextType::class,
+        ],
+        'MfwLocation' => [
+            'view' => LocationView::class,
+            'request' => LocationRequest::class
+        ],
+        'MfwCurrency' => [
+            'view' => CurrencyView::class,
+            'request' => IntegerType::class
+        ],
+        'MfwPeriod' => [
+            'view' => ReactRangeType::class,
+            'request' => ReactRangeType::class
+        ]
+    ];
 
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
-        $this->reactView = [];
-        $method = $options['input'] ? 'inputField' : 'queryField';
         foreach ($options['query']['fields'] as $name => $field) {
-            if ($field['type'] != 'custom') {
-                $qryField = $this->container->get('report.'.$field['type']);
-                $this->reactView[$name] = $qryField->$method($builder, $field, $name);
-            } else {
-                $this->$method($builder, $field, $name);
+            if (!isset($this::fieldsMap[$field['type']])) {
+
             }
-        }
-        if (isset($options['query']['multiUpload'])) {
             $builder->add(
-                'step',
-                HiddenType::class,
-                $options['input'] ? [] :
+                $name,
+                $this::fieldsMap[$field['type']][$options['request'] === true ? 'request' : 'view'],
                 [
-                    'attr' => [
-                        'class' => 'mfw-step'
-                    ]
+                    'attr' => ['field' => $field],
+
                 ]
             );
+        }
+        if (isset($options['query']['multiUpload'])) {
+            $builder->add('step', ReactHiddenType::class);
         }
     }
 
     public function configureOptions(OptionsResolver $resolver)
     {
-        $resolver->setRequired(['query', 'input']);
+        $resolver->setRequired(['query', 'request'])->setDefault('request', false);
     }
 }

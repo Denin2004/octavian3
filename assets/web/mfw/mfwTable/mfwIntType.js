@@ -1,13 +1,13 @@
 import React, {Component} from 'react';
 
-import Numeral from 'react-numeral';
+import MfwInteger from '@app/web/mfw/MfwInteger';
 
 class MfwIntType {
     static width = 60;
     static className = 'mfw-align-right';
     
     static render(text, record, index, column) {
-        return <Numeral value={text} format={"0,0"}/>;
+        return <MfwInteger value={text}/>;
     }
 
     static sorter(a, b, column) {
@@ -15,7 +15,7 @@ class MfwIntType {
     }
     
     static renderFilter(row, column) {
-        return <Numeral value={row[column.dataIndex]} format={"0,0"}/>;
+        return <MfwInteger value={row[column.dataIndex]}/>;
     }    
     
     static aggregatorInitValues(type) {
@@ -63,11 +63,11 @@ class MfwIntType {
     static renderTotal(type, value) {
         switch(type) {
             case 'sum':
-                return <Numeral value={value.sum} format={"0,0"}/>;
+                return <MfwInteger value={value.sum}/>;
             case 'cnt':
-                return <Numeral value={value.cnt} format={"0,0"}/>;
+                return <MfwInteger value={value.cnt}/>;
             case 'avg':
-                return <Numeral value={value.cnt != 0 ? value.sum/value.cnt : 0} format={"0,0"}/>;
+                return <MfwInteger value={value.cnt != 0 ? value.sum/value.cnt : 0}/>;
             default:
                 return 'error type';
         }

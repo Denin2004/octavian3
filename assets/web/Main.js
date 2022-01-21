@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {Route, Switch, Redirect, Link, withRouter, generatePath} from 'react-router-dom';
 
-import { Layout, Menu, Button } from 'antd';
+import { Layout, Menu, Button, Spin } from 'antd';
 
 import { faGem, faCrown, faMoneyBillAlt, faUsers, faTv, faTools, faBug } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -68,9 +68,11 @@ class Main extends Component {
                     </Menu>                        
                 </Layout.Sider>
                 <Layout.Content>
+                    {this.state.loading ? <Spin/> : 
                     <Switch>
-                        <Route path="/report/page/:id(\d+)" component={Test} />
-                    </Switch>                
+                        <Route path="/report/page/:id(\d+)" component={Report} />
+                    </Switch>
+                    }
                 </Layout.Content>
             </Layout>
         )

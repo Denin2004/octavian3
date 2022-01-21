@@ -17,7 +17,7 @@ class Report extends Component {
                 }
             }
         ).then(res => {
-            console.log(res);
+            console.log(res.data.report.formQuery);
         }).catch(error => {
             if (error.response) {
                 console.log(error);

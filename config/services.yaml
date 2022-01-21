@@ -31,7 +31,6 @@ services:
         resource: '../src/'
         exclude:
             - '../src/DependencyInjection/'
-            - '../src/Entity/'
             - '../src/Kernel.php'
             - '../src/Tests/'
 
@@ -43,13 +42,13 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-    
+
     App\Controller\CommonController:
         class: App\Controller\Common
         arguments: ['@App\Services\MyACP\MyACP']
         tags: ['controller.service_arguments']
         public: true
-        
+
     App\Entity\:
         resource: '../src/Entity/'
         tags: ['controller.service_arguments']
@@ -80,99 +79,51 @@ services:
         class: App\Services\Security\Access
         arguments: ['@twig', '@App\Entity\Users', '@App\Entity\WebRoles']
         public: true
-        
+
     app.voter:
         class: App\Services\Security\RouteVoter
         tags: [security.voter]
-        public: false          
-        
+        public: false
+
     app.access.denied.controller:
         class: App\Services\Security\DeniedHandler
         arguments: ['@router']
-        
+
     App\Services\Report\Report:
         class: App\Services\Report\Report
         public: true
         arguments: ['@App\Services\MyACP\MyACP', '@App\Services\SiteConfig\SiteConfig', '@request_stack', '@App\Services\RPN\RPNService', '@router', '@twig', '@form.factory']
 
-    App\Form\React\ReactForm:
-        class: App\Form\React\ReactForm
-        arguments: ['@security.csrf.token_manager']
+    form.Range:
+        class: App\Form\React\ReactRangeType
+        arguments: ['@App\Services\SiteConfig\SiteConfig']
+        tags: [form.type]
+
+    form.Date:
+        class: App\Form\React\ReactDateType
+        arguments: ['@App\Services\SiteConfig\SiteConfig']
+        tags: [form.type]
 
     App\Form\Report\Query:
         class: App\Form\Report\Query
         arguments: ['@service_container', '@security.csrf.token_manager']
-        
-    report.MfwDate:
-        class: App\Services\Report\Query\MfwDate
-        arguments: ['@App\Services\SiteConfig\SiteConfig', '@request_stack']
-        public: true
 
-    report.MfwDateTime:
-        class: App\Services\Report\Query\MfwDateTime
-        public: true
+    App\Form\Report\LocationView:
+       class: App\Form\Report\LocationView
+       arguments: ['@App\Entity\Locations']
+       tags: [form.type]
+       
+    App\Form\Report\LocationRequest:
+       class: App\Form\Report\LocationRequest
+       arguments: ['@App\Entity\Locations']
+       tags: [form.type]
 
-    report.MfwPeriod:
-        class: App\Services\Report\Query\MfwPeriod
-        arguments: ['@App\Services\SiteConfig\SiteConfig', '@router', '@request_stack']
-        public: true
+    App\Form\Report\CurrencyView:
+       class: App\Form\Report\CurrencyView
+       arguments: ['@App\Entity\Currency']
+       tags: [form.type]
 
-    report.MfwPlayer:
-        class: App\Services\Report\Query\MfwPlayer
-        arguments: ['@router', '@translator']
-        public: true
-
-    report.MfwText:
-        class: App\Services\Report\Query\MfwText
-        public: true
-
-    report.MfwPercent:
-        class: App\Services\Report\Query\MfwPercent
-        public: true
-
-    report.MfwHidden:
-        class: App\Services\Report\Query\MfwHidden
-        public: true
-
-    report.MfwCheckbox:
-        class: App\Services\Report\Query\MfwCheckbox
-        public: true
-
-    report.MfwLocation:
-        class: App\Services\Report\Query\MfwLocation
-        public: true
-
-    report.MfwJackpot:
-        class: App\Services\Report\Query\MfwJackpot
-        public: true
-
-    report.MfwCurrency:
-        class: App\Services\Report\Query\MfwCurrency
-        public: true
-
-    report.MfwCardsType:
-        class: App\Services\Report\Query\MfwCardsType
-        public: true
-
-    report.MfwChoice:
-        class: App\Services\Report\Query\MfwChoice
-        arguments: ['@App\Services\MyACP\MyACP']
-        public: true
-
-    report.MfwSelInput:
-        class: App\Services\Report\Query\MfwSelInput
-        public: true
-
-    report.MfwButton:
-        class: App\Services\Report\Query\MfwButton
-        arguments: ['@router']
-        public: true
-
-    report.MfwReportInfo:
-        class: App\Services\Report\Query\MfwReportInfo
-        arguments: ['@App\Services\Report\Report']
-        public: true
-        
     App\Form\React\ReactTextType:
         class: App\Form\React\ReactTextType
-        tags: [form.type]        
+        tags: [form.type]
+

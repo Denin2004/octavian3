@@ -54,7 +54,7 @@ class App extends Component {
             <ConfigProvider locale={locales[this.state.locale].antd}> 
                 <Switch>
                     <Route path="/login" component={Login} />
-                    <Route path="/" component={Main} />
+                    <Route path="*" component={Main} />
                 </Switch>
             </ConfigProvider>
         )

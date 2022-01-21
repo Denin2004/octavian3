@@ -29,7 +29,6 @@ class Main extends Common
                 ]);
             }
         }
-        dump($report);
         return new JsonResponse([
             'success' => true,
             'report' => $report

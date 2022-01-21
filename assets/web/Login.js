@@ -44,18 +44,18 @@ class Login extends Component {
                           wrapperCol={{ span: 16 }}
                           name="basic"
                           onFinish={this.login}>
-                        <Form.Item label={this.props.t('login._')}
+                        <Form.Item label={this.props.t('employee.login')}
                           name="_username"
                           rules={[{ required: true, message: this.props.t('login.errors.login_message')}]}>
                             <Input />
                         </Form.Item>
-                        <Form.Item label={this.props.t('login.password')}
+                        <Form.Item label={this.props.t('security.password._password')}
                            name="_password"
                            rules={[{ required: true, message: this.props.t('login.errors.password_message')}]}>
                             <Input.Password/>
                         </Form.Item>
                         <Form.Item wrapperCol={{ offset: 8, span: 16 }}>
-                            <Button type="primary" htmlType="submit">{this.props.t('login._')}</Button>
+                            <Button type="primary" htmlType="submit">{this.props.t('employee.login')}</Button>
                         </Form.Item>
                     </Form> 
                 </Modal>

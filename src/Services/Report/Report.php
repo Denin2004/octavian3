@@ -93,8 +93,7 @@ class Report
                 Query::class,
                 $query,
                 [
-                    'query' => $this->reportDB['query'],
-                    'input' => false
+                    'query' => $this->reportDB['query']
                 ]
             );
             $form->add(
@@ -124,8 +123,7 @@ class Report
                 }
             }
             $v = $form->createView();
-            $this->reportDB['formQuery'] = $v->vars['reactView'];
-            dump($v);
+            $this->reportDB['formQuery'] = $v->vars['react'];
             $this->reportDB['results'] = $this->parseResults();
             if ($this->reportDB['results'] === false) {
                 $this->reportDB['error'] = $this->lastError;
