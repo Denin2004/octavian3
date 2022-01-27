@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {Route, Switch, Redirect, Link, withRouter, generatePath} from 'react-router-dom';
 
-import { Layout, Menu, Button, Spin } from 'antd';
+import { Layout, Menu, Spin, message } from 'antd';
 
 import { faGem, faCrown, faMoneyBillAlt, faUsers, faTv, faTools, faBug } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';

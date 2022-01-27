@@ -1,11 +1,18 @@
 import React, {Component} from 'react';
 import {generatePath} from 'react-router-dom';
 
+import { Spin } from 'antd';
+
 import axios from 'axios';
+
+import Query from '@app/web/report/Query';
 
 class Report extends Component {
     constructor(props){
         super(props);
+        this.state = {
+            report: null
+        };
     }
     
     componentDidMount() {
@@ -17,7 +24,8 @@ class Report extends Component {
                 }
             }
         ).then(res => {
-            console.log(res.data.report.formQuery);
+            console.log(res.data);
+            this.setState({report: res.data.report});
         }).catch(error => {
             if (error.response) {
                 console.log(error);
@@ -29,9 +37,10 @@ class Report extends Component {
     }
 
     render() {
-        return (
-                <div>Report {this.props.match.params.id}</div>
-        )
+        return this.state.report == null ? <Spin/> :
+            <React.Fragment>
+                {this.state.report.formQuery != undefined ? <Query query={this.state.report.formQuery} title={'dddd'} /> : null} 
+            </React.Fragment>        
     }
 }
 

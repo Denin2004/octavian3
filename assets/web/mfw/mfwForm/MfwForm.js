@@ -8,16 +8,10 @@ import { withTranslation } from 'react-i18next';
 import MfwFormWidget from '@app/mfw/mfwForm/MfwFormWidget';
 
 class MfwForm extends Component {
+    
     constructor(props){
         super(props);
-        this.closeError = this.closeError.bind(this);
-        this.finish = this.finish.bind(this);
-        var parsed = this.props.parsed ? this.props.parsed : [];
-        React.Children.toArray(this.props.children).map((child) => {
-            this.findWidget(child, parsed);
-        });
         this.state = {
-            parsed: parsed
         }
     }
 
@@ -53,15 +47,7 @@ class MfwForm extends Component {
 
     render() {
         return (
-            <Form {...this.props.formProps} onFinish={this.finish}>
-                {this.props.children}
-                {Object.keys(this.props.mfwForm.elements).map(key => {
-                    if (this.state.parsed.indexOf(this.props.mfwForm.elements[key].id) === -1) {
-                        return (
-                            <MfwFormWidget key={key} element={this.props.mfwForm.elements[key]}/>
-                        )
-                    }
-                })}
+            <Form onFinish={this.finish}>
             </Form>
         )
     }
