@@ -16,7 +16,7 @@ use App\Form\Report\CurrencyView;
 
 class Query extends ReactForm
 {
-    const fieldsMap = [
+    const FIELDS_MAP = [
         'MfwHidden' => [
             'view' => ReactHiddenType::class,
             'request' => HiddenType::class
@@ -42,12 +42,12 @@ class Query extends ReactForm
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         foreach ($options['query']['fields'] as $name => $field) {
-            if (!isset($this::fieldsMap[$field['type']])) {
+            if (!isset($this::FIELDS_MAP[$field['type']])) {
 
             }
             $builder->add(
                 $name,
-                $this::fieldsMap[$field['type']][$options['request'] === true ? 'request' : 'view'],
+                $this::FIELDS_MAP[$field['type']][$options['request'] === true ? 'request' : 'view'],
                 [
                     'attr' => ['field' => $field],
 

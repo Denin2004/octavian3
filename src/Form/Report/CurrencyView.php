@@ -7,7 +7,7 @@ use Symfony\Component\Form\FormInterface;
 use App\Form\React\ReactChoiceType;
 use App\Entity\Currency;
 
-class  CurrencyView extends ReactChoiceType
+class CurrencyView extends ReactChoiceType
 {
     private $currencyDB;
 
@@ -20,7 +20,7 @@ class  CurrencyView extends ReactChoiceType
     {
         $choices = [];
         if (isset($options['attr']['field']['all'])) {
-            $choices['currency.all '] = $options['attr']['field']['all'];
+            $choices['currency.all'] = $options['attr']['field']['all'];
         }
         $currencies = $this->currencyDB->listCurrency(isset($options['attr']['field']['woPOS']) ? $options['attr']['field']['woPOS'] : false);
         foreach ($currencies as $currency) {
@@ -33,5 +33,7 @@ class  CurrencyView extends ReactChoiceType
     {
         $options['label'] = isset($options['label']) ? $options['label'] : 'currency._currency';
         parent::buildView($view, $form, $options);
+        $view->parent->vars['react'][$view->vars['name']]['type'] = 'mfw-currency';
+        $view->parent->vars['react'][$view->vars['name']]['all'] = isset($options['attr']['field']['all']);
     }
 }

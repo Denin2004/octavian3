@@ -51,7 +51,7 @@ class Main extends Component {
     render() {
         return (
             <Layout style={{ minHeight: '100vh' }}>
-                <Layout.Sider collapsed={true}>
+                <Layout.Sider collapsed={true} collapsible>
                     <Menu mode="inline" theme="dark" className="mfw-main-menu">
                         <Menu.Item key="1" icon={<div><FontAwesomeIcon icon={faGem}/><div className="ant-menu-title-content">Mashines</div></div>}/>
                         <Menu.Item key="2" icon={<div><FontAwesomeIcon icon={faCrown}/><div className="ant-menu-title-content">Jackpots</div></div>}/>
@@ -67,13 +67,16 @@ class Main extends Component {
                         <Menu.Item key="10" icon={<Link to={generatePath('/report/page/:id', {id: 47})}><FontAwesomeIcon icon={faBug}/><div className="ant-menu-title-content">Test report</div></Link>}/>
                     </Menu>                        
                 </Layout.Sider>
-                <Layout.Content>
-                    {this.state.loading ? <Spin/> : 
+                <Layout>
+                    {this.state.loading ? 
+                    <Layout.Content>
+                        <Spin/>
+                    </Layout.Content> : 
                     <Switch>
                         <Route path="/report/page/:id(\d+)" component={Report} />
                     </Switch>
                     }
-                </Layout.Content>
+                </Layout>
             </Layout>
         )
     }

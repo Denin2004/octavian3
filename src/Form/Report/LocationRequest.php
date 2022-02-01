@@ -8,7 +8,7 @@ use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 
 use App\Entity\Locations;
 
-class  LocationRequest extends HiddenType
+class LocationRequest extends HiddenType
 {
     private $locationDB;
 

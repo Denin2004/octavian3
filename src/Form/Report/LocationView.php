@@ -7,7 +7,7 @@ use Symfony\Component\Form\FormInterface;
 use App\Form\React\ReactChoiceType;
 use App\Entity\Locations;
 
-class  LocationView extends ReactChoiceType
+class LocationView extends ReactChoiceType
 {
     private $locationDB;
 
@@ -20,7 +20,7 @@ class  LocationView extends ReactChoiceType
     {
         $choices = [];
         if (isset($options['attr']['field']['all'])) {
-            $choices['location.all '] = $options['attr']['field']['all'];
+            $choices['location.all'] = $options['attr']['field']['all'];
         }
         $locations = $this->locationDB->locationsForUser();
         foreach ($locations as $loc) {
@@ -33,5 +33,7 @@ class  LocationView extends ReactChoiceType
     {
         $options['label'] = isset($options['label']) ? $options['label'] : 'location._location';
         parent::buildView($view, $form, $options);
+        $view->parent->vars['react'][$view->vars['name']]['type'] = 'mfw-location';
+        $view->parent->vars['react'][$view->vars['name']]['all'] = isset($options['attr']['field']['all']);
     }
 }

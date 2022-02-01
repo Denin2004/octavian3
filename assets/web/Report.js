@@ -1,9 +1,10 @@
 import React, {Component} from 'react';
 import {generatePath} from 'react-router-dom';
 
-import { Spin } from 'antd';
+import { Spin, Layout } from 'antd';
 
 import axios from 'axios';
+import { withTranslation } from 'react-i18next';
 
 import Query from '@app/web/report/Query';
 
@@ -24,7 +25,6 @@ class Report extends Component {
                 }
             }
         ).then(res => {
-            console.log(res.data);
             this.setState({report: res.data.report});
         }).catch(error => {
             if (error.response) {
@@ -37,11 +37,16 @@ class Report extends Component {
     }
 
     render() {
-        return this.state.report == null ? <Spin/> :
+        return <React.Fragment>
+            {this.state.report == null ? <Layout.Content><Spin/></Layout.Content> :
             <React.Fragment>
-                {this.state.report.formQuery != undefined ? <Query query={this.state.report.formQuery} title={'dddd'} /> : null} 
-            </React.Fragment>        
+                {this.state.report.formQuery != undefined ? <Layout.Header>
+                    <Query query={this.state.report.formQuery} title={this.state.report.title} />
+                </Layout.Header> : null} 
+                <Layout.Content>Report body</Layout.Content>
+            </React.Fragment>}
+        </React.Fragment>
     }
 }
 
-export default Report;
+export default withTranslation()(Report);
