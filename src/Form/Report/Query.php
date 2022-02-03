@@ -10,9 +10,9 @@ use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use App\Form\React\ReactForm;
 use App\Form\React\ReactHiddenType;
 use App\Form\React\ReactTextType;
-use App\Form\React\ReactRangeType;
 use App\Form\Report\LocationView;
 use App\Form\Report\CurrencyView;
+use App\Form\Report\Period;
 
 class Query extends ReactForm
 {
@@ -34,8 +34,8 @@ class Query extends ReactForm
             'request' => IntegerType::class
         ],
         'MfwPeriod' => [
-            'view' => ReactRangeType::class,
-            'request' => ReactRangeType::class
+            'view' => Period::class,
+            'request' => Period::class
         ]
     ];
 

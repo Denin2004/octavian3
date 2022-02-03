@@ -20,8 +20,8 @@ class LocationChoice extends Component {
     render() {
         return (
             <Form.Item name={this.props.field.full_name}
-                       label={this.props.t(this.props.field.label)}
-                       initialValue={this.props.field.value}>
+              label={this.props.t(this.props.field.label)}
+              initialValue={this.props.field.value == '' ? (this.state.choices.length != 0 ? this.state.choices[0].value : null) : this.props.field.value}>
                 <Select  options={this.state.choices}/>
             </Form.Item>
         )

@@ -9,11 +9,11 @@ import ru_RU_calendar from '@app/translations/calendar_ru_RU';
 const locales = {
     default: window.mfwApp.locale,
     en: {
-        moment: 'en-us',
+        moment: 'ru',//'en-us',
         i18n: 'en',
         antd: en_Us,
         name: 'EN',
-        calendar: en_Us_calendar
+        calendar: ru_RU_calendar//en_Us_calendar
     },
     ru: {
         moment: 'ru',
