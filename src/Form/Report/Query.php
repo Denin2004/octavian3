@@ -6,6 +6,7 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
+use Symfony\Component\Form\CallbackTransformer;
 
 use App\Form\React\ReactForm;
 use App\Form\React\ReactHiddenType;
@@ -45,17 +46,39 @@ class Query extends ReactForm
             if (!isset($this::FIELDS_MAP[$field['type']])) {
 
             }
+            $field['request'] = $options['request'];
             $builder->add(
                 $name,
                 $this::FIELDS_MAP[$field['type']][$options['request'] === true ? 'request' : 'view'],
                 [
-                    'attr' => ['field' => $field],
-
+                    'attr' => ['field' => $field]
                 ]
             );
         }
         if (isset($options['query']['multiUpload'])) {
             $builder->add('step', ReactHiddenType::class);
+        }
+        if ($options['request']) {
+            $builder->addModelTransformer(new CallbackTransformer(
+                function ($value) {
+                    return $value;
+                },
+                function ($value) {
+                    $this->transformValue($value, $value);
+                    return $value;
+                }
+            ));
+        }
+    }
+
+    private function transformValue(&$value, $data)
+    {
+        foreach ($data as $key => $val) {
+            if (is_array($val)) {
+                $this->transformValue($value, $val);
+            } else {
+                $value[$key] = $val;
+            }
         }
     }
 

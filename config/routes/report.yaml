@@ -18,11 +18,10 @@ reportMetaData:
     methods: [GET]
 
 reportData:
-    path: /data/{id}/{uniqid}/{datatable}
+    path: /data/{id}
     controller: App\Controller\Report\Main::data
     methods: [POST]
     defaults:
-        datatable: 0
+        id: 0
     requirements:
         id: \d+
-        datatable: 0|1

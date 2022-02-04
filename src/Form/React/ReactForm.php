@@ -34,7 +34,8 @@ class ReactForm extends AbstractType
                     $view->vars['react'][$child->vars['name']] = [
                         'value' => $child->vars['value'],
                         'type' => 'mfw-hidden',
-                        'full_name' => $child->vars['full_name']
+                        'full_name' => $child->vars['full_name'],
+                        'name' => $child->vars['name']
                     ];
                     break;
                 }

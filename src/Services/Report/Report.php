@@ -143,48 +143,13 @@ class Report
                 $this->reportDB['error'] = $this->lastError;
                 return $this->reportDB;
             };
-            $autoload = isset($this->reportDB['autoLoad']) ? $this->reportDB['autoLoad'] : true;
-            if ($autoload === true) {
-                if (count($this->reportDB['results']) == 1) {
-                    if (isset($this->reportDB['results'][0]['tableConfig'])) {
-                        $this->reportDB['results'][0]['tableConfig']['tableInit']['ajax'] = $this->router->generate(
-                            'reportData',
-                            array_replace_recursive(
-                                [
-                                    'id' => $id,
-                                    'datatable' => 1,
-                                    'uniqid' => $this->reportDB['uniqid']
-                                ],
-                                $this->formData
-                            )
-                        );
-                    }
-                } else {
-                    $controller->addResponse([
-                        'ajaxExecute'=> [
-                            'url' => $this->router->generate(
-                                'reportData',
-                                array_replace_recursive(
-                                    [
-                                        'id' => $id,
-                                        'uniqid' => $this->reportDB['uniqid']
-                                    ],
-                                    $this->formData
-                                )
-                            ),
-                            'method' => 'post',
-                            'type' => 'json'
-                        ]
-                    ]);
-                }
-            }
         }
         $this->reportDB['reportId'] = $id;
         return $this->reportDB;
     }
 
     // typeResult 0 - report result , 1- datatable result, 2 - pure result, 3 - formatted
-    public function getResult(Request $request, $id, $typeResult, $uniqid)
+    public function getResult(Request $request, $id)
     {
         $res = [];
         if (!$this->myACP->getUser()->getReportAccess($id)) {
@@ -196,10 +161,6 @@ class Report
             return $res;
         }
         $this->id = $id;
-        $this->uniqid = $uniqid;
-        $this->reportDB['db_id'] = $this->id;
-        $this->reportDB['uniqid'] = $uniqid;
-        $this->reportDB['id'].= '_'.$uniqid;
         $this->reportID = $this->reportDB['id'];
         $this->formData = [];
         $this->reportDB['handler']->beforeResultQuery($this->reportDB);
@@ -213,13 +174,16 @@ class Report
                 [],
                 [
                     'query' => $this->reportDB['query'],
-                    'input' => true
+                    'request' => true
                 ]
             );
-            $form->handleRequest($request);
-            if (!$form->isSubmitted()) {
-                $form->submit($request->request->get($form->getName()));
+
+            $formRequest = json_decode($request->getContent(), true);
+            if ($formRequest == null) {
+                $this->lastError = 'report.error.no_query_data';
+                return $res;
             }
+            $form->submit($formRequest);
             if (!$form->isValid()) {
                 foreach ($form->getErrors(true) as $error) {
                     $this->lastError.= 'Code400 '.$error->getMessage().' ';
@@ -270,13 +234,7 @@ class Report
             if ($res === false) {
                 return $res;
             }
-            if ($typeResult == self::PURE_RESULT) {
-                return $res;
-            }
             $this->reportDB['handler']->afterResult($res, $result);
-            if ($typeResult == self::FORMATTED_RESULT) {
-                return $res;
-            }
             if (isset($result['tableConfig'])) {
                 $rows = isset($res['result']) ? $res['result'] : $res;
                 $clcFields = [];
@@ -296,46 +254,12 @@ class Report
                         $clcFields[$key]['rpn']->parse(implode('', $formula['tags']));
                     }
                 }
-                $frmtRes = $this->tableFormatResult($result, $rows, $clcFields, $controller);
-                if ($frmtRes === false) {
-                    return $res;
-                }
-                if ($typeResult == self::DATATABLE_RESULT) {
-                    return $frmtRes;
-                } else {
-                    if (isset($this->reportDB['query']['multiUpload'])) {
-                        $multiRes[] = [
-                            'selector' => '#tbl_'.$this->reportDB['id'].'_'.$resKey,
-                            'data' => $frmtRes
-                        ];
-                    } else {
-                        $controller->addResponse([
-                            'mfwDataTable:setData' => [
-                                'selector' => '#tbl_'.$this->reportDB['id'].'_'.$resKey,
-                                'data' => $frmtRes
-                            ]
-                        ]);
-                    }
-                }
+                $frmtRes = $this->tableFormatResult($result, $rows, $clcFields);
+                return $frmtRes === false ? $res : $frmtRes;
             }
             if (isset($result['pivotConfig'])) {
                 $frmtRes = $this->pivotFormatResult($result, $res);
-                if ($frmtRes === false) {
-                    return $res;
-                }
-                if (isset($this->reportDB['query']['multiUpload'])) {
-                    $multiRes[] = [
-                        'selector' => '#pivot_'.$this->reportDB['id'].'_'.$resKey,
-                        'data' => $frmtRes
-                    ];
-                } else {
-                    $controller->addResponse([
-                        'mfwPivot:jsonBuild' => [
-                            'selector' => '#pivot_'.$this->reportDB['id'].'_'.$resKey,
-                            'body' => $frmtRes
-                        ]
-                    ]);
-                }
+                return $frmtRes === false ? $res : $frmtRes;
             }
             if (isset($result['twigConfig'])) {
                 $controller->addResponse([
@@ -795,7 +719,7 @@ class Report
         return $res;
     }
 
-    private function tableFormatResult($result, &$res, $clcFields, CommonController $controller)
+    private function tableFormatResult($result, &$res, $clcFields)
     {
         foreach ($res as $key => $row) {
             foreach ($result['tableConfig']['tableInit']['columns'] as $column) {
@@ -814,21 +738,12 @@ class Report
             foreach ($clcFields as $field) {
                 $clcRes = $field['rpn']->calc($res[$key]);
                 if ($clcRes === false) {
-                    $res[$key]['CLC_'.$field['ID']] = $this->translator->trans($field['rpn']->errorCode());
+                    $res[$key]['CLC_'.$field['ID']] = $field['rpn']->errorCode();
                 } else {
                     $res[$key]['CLC_'.$field['ID']] = $clcRes;
                 }
             }
             $errorlevel = error_reporting();
-            error_reporting(0);
-            foreach ($clcFields as $field) {
-                $method = $field['method'];
-                $frm_value = $controller->$method($res[$key]['CLC_'.$field['ID']]);
-                if ($frm_value != null) {
-                    $res[$key]['CLC_'.$field['ID']] = $frm_value;
-                }
-            }
-            error_reporting($errorlevel);
         }
         return $res;
     }
@@ -865,12 +780,13 @@ class Report
         if ($error == '') {
             return false;
         }
-        $transError = $this->translator->trans($error);
+        $this->lastError = $error;
+/*        $transError = $this->translator->trans($error);
         if ($transError == $error) {
             $this->lastError = $this->myACP->getLastError();
         } else {
             $this->lastError = $this->translator->trans($error);
-        }
+        }*/
         return true;
     }
 

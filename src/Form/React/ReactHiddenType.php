@@ -18,7 +18,8 @@ class ReactHiddenType extends AbstractType
         $view->parent->vars['react'][$view->vars['name']] = [
             'type' => 'mfw-hidden',
             'value' => $view->vars['value'],
-            'full_name' => $view->vars['full_name']
+            'full_name' => $view->vars['full_name'],
+            'name' => $view->vars['name']
         ];
     }
 }

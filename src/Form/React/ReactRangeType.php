@@ -15,7 +15,7 @@ use App\Services\SiteConfig\SiteConfig;
 
 class ReactRangeType extends AbstractType
 {
-    private $siteConfig;
+    protected $siteConfig;
 
     public function __construct(SiteConfig $config)
     {
@@ -65,7 +65,8 @@ class ReactRangeType extends AbstractType
         $view->parent->vars['react'][$view->vars['name']] = [
             'type' => 'mfw-range',
             'value' => $view->vars['value'],
-            'full_name' => $view->vars['full_name']
+            'full_name' => $view->vars['full_name'],
+            'name' => $view->vars['name']
         ];
     }
 

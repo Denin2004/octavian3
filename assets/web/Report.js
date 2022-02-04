@@ -39,7 +39,25 @@ class Report extends Component {
     }
     
     getData(values) {
-        this.setState({queryText: this.getQueryText(values)})
+        axios({
+            method: 'post',
+            url: generatePath(window.mfwApp.urls.report.data+'/:id', {id: this.props.match.params.id}),
+            data: values,
+            headers: {'Content-Type': 'application/json','X-Requested-With': 'XMLHttpRequest'}
+        }).then(res => {
+            if (res.data.success) {
+                console.log(res.data);
+                this.setState({queryText: this.getQueryText(values)})
+            } else {
+                message.error(this.props.t(res.data.error));
+            }
+        }).catch(error => {
+            message.error(error.toString());
+        });
+        
+        
+        
+        //this.setState({queryText: this.getQueryText(values)})
     }
     
     getQueryText(values) {

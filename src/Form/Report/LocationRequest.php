@@ -4,17 +4,23 @@ namespace App\Form\Report;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Callback;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
-
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
+use Symfony\Component\Form\AbstractType;
 
 use App\Entity\Locations;
 
-class LocationRequest extends HiddenType
+class LocationRequest extends AbstractType
 {
     private $locationDB;
 
     public function __construct(Locations $locationDB)
     {
         $this->locationDB = $locationDB;
+    }
+
+    public function getParent()
+    {
+        return HiddenType::class;
     }
 
     public function configureOptions(OptionsResolver $resolver)
@@ -28,13 +34,12 @@ class LocationRequest extends HiddenType
 
     public function checkLocation($value, ExecutionContextInterface $context)
     {
-        return true;
         $config = $context->getObject()->getConfig()->getOptions();
         if (($config['attr']['field']['all'] && $config['attr']['field']['allCode'] == $value)) {
             return;
         }
         if (!$this->locationDB->checkLocationAccessDB($value)) {
-            $context->buildViolation($this->translator->trans('location.error.access'))
+            $context->buildViolation('location.error.access')
                 ->addViolation();
         }
     }

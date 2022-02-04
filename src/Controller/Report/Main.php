@@ -35,36 +35,33 @@ class Main extends Common
         ]);
     }
 
-    public function data(Request $request, ReportService $repService, $id, $uniqid, $datatable)
+    public function data(Request $request, ReportService $repService, $id)
     {
-        $res = $repService->getResult($request, $this, $id, $datatable, $uniqid);
+        $res = $repService->getResult($request, $id);
         if ($repService->isError()) {
             $reportError = $repService->getLastError();
             $errors = explode('Code400', $reportError);
             if (count($errors) > 1) {
-                $this->addResponse([
-                    'showToast' => [
-                        'text' => implode(' ', $errors),
-                        'type' => 'error'
-                    ]
+                return new JsonResponse([
+                    'success' => false,
+                    'error' => implode(' ', $errors)
                 ]);
-                return $this->getResponse(400);
             }
-            $this->addResponse([
-                'showToast' => [
-                    'text' => $reportError,
-                    'type' => 'error'
-                ]
-            ]);
             if ($reportError == '403') {
-                return $this->getResponse(403);
+                return new JsonResponse([
+                    'success' => false,
+                    'error' => $reportError
+                ], 403);
             } else {
-                return $this->getResponse(500);
+                return new JsonResponse([
+                    'success' => false,
+                    'error' => $reportError
+                ]);
             }
         }
-        if ($datatable == 1) {
-            return new JsonResponse(['data' => $res]);
-        }
-        return $this->getResponse();
+        return new JsonResponse([
+            'success' => true,
+            'result' => $res
+        ]);
     }
 }

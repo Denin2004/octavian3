@@ -17,7 +17,8 @@ class ReactFileType extends AbstractType
     {
         $view->parent->vars['react'][$view->vars['name']] = [
             'type' => 'mfw-file',
-            'full_name' => $view->vars['full_name']
+            'full_name' => $view->vars['full_name'],
+            'name' => $view->vars['name']
         ];
     }
 }

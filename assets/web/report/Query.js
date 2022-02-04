@@ -12,6 +12,7 @@ import QueryChoice from '@app/web/report/query/QueryChoice';
 import LocationChoice from '@app/web/report/query/LocationChoice';
 import CurrencyChoice from '@app/web/report/query/CurrencyChoice';
 import QueryRange from '@app/web/report/query/QueryRange';
+import QueryHidden from '@app/web/report/query/QueryHidden';
 
 class Query extends Component {
     constructor(props){
@@ -55,6 +56,8 @@ class Query extends Component {
                                 return <CurrencyChoice field={this.props.query[field]} key={field}/>
                             case 'mfw-range':
                                 return <QueryRange field={this.props.query[field]} key={field}/>
+                            case 'mfw-hidden':
+                                return <QueryHidden field={this.props.query[field]} key={field}/>                                
                         }
                     })}
                 </Form>

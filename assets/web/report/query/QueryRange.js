@@ -149,7 +149,7 @@ class QueryRange extends Component {
     
     render() {
         return (
-            <Form.Item name={this.props.field.full_name}
+            <Form.Item name={this.props.field.name}
                 label={this.props.t(this.props.field.label)}
                 initialValue={this.state.initValue}>
                 <DatePicker.RangePicker 

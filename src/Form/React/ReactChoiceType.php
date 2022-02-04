@@ -40,7 +40,8 @@ class ReactChoiceType extends AbstractType
             'value' => $view->vars['value'],
             'multiple' => isset($options['multiple']) ? $options['multiple'] : false,
             'full_name' => $view->vars['full_name'],
-            'label' => $options['label']
+            'label' => $options['label'],
+            'name' => $view->vars['name']
         ];
     }
 
