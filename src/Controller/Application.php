@@ -10,18 +10,30 @@ use Symfony\Component\HttpFoundation\Request;
 
 use Mobile_Detect;
 
+use App\Services\SiteConfig\SiteConfig;
+
 class Application extends AbstractController
 {
     /**
      * @Route("{reactRouting}", name="default", defaults={"reactRouting": null})
      */
-    public function index()
+    public function index(SiteConfig $config)
     {
         $detect = new Mobile_Detect;
         if ($detect->isMobile()) {
-            return $this->render('base.mobile.html.twig');
+            return $this->render(
+                'base.mobile.html.twig',
+                [
+                    'numeral' => $config->get('numeral')
+                ]
+            );
         }
-        return $this->render('base.web.html.twig');
+        return $this->render(
+            'base.web.html.twig',
+            [
+                'numeral' => $config->get('numeral')
+            ]
+        );
     }
 
     public function error403(Request $request)

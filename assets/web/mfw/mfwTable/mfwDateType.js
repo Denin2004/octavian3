@@ -1,7 +1,8 @@
 import moment from 'moment-timezone';
 
 class MfwDateType {
-    static width = 60;
+    static width = 100;
+    static align = 'left';
     
     static render(text, record, index, column) {
         return text;

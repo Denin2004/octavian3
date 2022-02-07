@@ -1,0 +1,10 @@
+machineInfo:
+    path: /info/{modal}/{id}
+    controller: App\Controller\Machines\Info::info
+    methods: [GET]
+    requirements:
+        id: \d+
+        modal: 0|1
+    defaults:
+        id: 0
+    

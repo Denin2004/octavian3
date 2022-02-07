@@ -2,7 +2,7 @@ import React, {Component} from 'react';
 
 class MfwCheckboxType {
     static width = 60;
-    static className = 'mfw-center-right';
+    static align = 'center';
     
     static render(text, record, index, column) {
         return <Checkbox>Checkbox</Checkbox>;

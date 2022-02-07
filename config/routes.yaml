@@ -20,3 +20,7 @@ appConfig:
 report:
     resource: 'routes/report.yaml'
     prefix: /report
+    
+machines:
+    prefix: /machines
+    resource: 'routes/machines.yaml'    

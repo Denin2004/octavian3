@@ -3,8 +3,8 @@ import React, {Component} from 'react';
 import MfwNumber from '@app/web/mfw/MfwNumber';
 
 class MfwNumberType {
-    static width = 60;
-    static className = 'mfw-align-right';
+    static width = 150;
+    static align = 'right';
 
     static render(text, record, index, column) {
         return <MfwNumber value={text}/>;

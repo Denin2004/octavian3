@@ -51,7 +51,7 @@ class App extends Component {
 
     render() {
         return (
-            <ConfigProvider locale={locales[this.state.locale].antd}> 
+            <ConfigProvider locale={locales[this.state.locale].antd} componentSize="middle"> 
                 <Switch>
                     <Route path="/login" component={Login} />
                     <Route path="*" component={Main} />

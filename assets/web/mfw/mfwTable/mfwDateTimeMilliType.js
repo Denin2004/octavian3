@@ -1,5 +1,6 @@
 class MfwDateTimeMilliType {
     static width = 160;
+    static align = 'left';
     
     static render(text, record, index, column) {
         return text;

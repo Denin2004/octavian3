@@ -42,7 +42,6 @@ class Report
         RequestStack $requestStack,
         RPNService $rpn,
         RouterInterface $router,
-        Environment $twig,
         FormFactoryInterface $formBuilder
     ) {
         $this->myACP = $myACP;
@@ -50,7 +49,6 @@ class Report
         $this->request = $requestStack->getCurrentRequest();
         $this->rpn = $rpn;
         $this->router = $router;
-        $this->twig = $twig;
         $this->formBuilder = $formBuilder;
     }
 
@@ -230,13 +228,13 @@ class Report
             return $res;
         };
         foreach ($this->reportDB['results'] as $resKey => $result) {
-            $res = isset($result['query']) ? $this->getDBResult($result, isset($this->reportDB['query']) ? $this->reportDB['query']['fields'] : []) : [];
-            if ($res === false) {
-                return $res;
+            $res[$resKey] = isset($result['query']) ? $this->getDBResult($result, isset($this->reportDB['query']) ? $this->reportDB['query']['fields'] : []) : [];
+            if ($res[$resKey] === false) {
+                return false;
             }
-            $this->reportDB['handler']->afterResult($res, $result);
+            $this->reportDB['handler']->afterResult($res[$resKey], $result);
             if (isset($result['tableConfig'])) {
-                $rows = isset($res['result']) ? $res['result'] : $res;
+                $rows = isset($res[$resKey]['result']) ? $res[$resKey]['result'] : $res[$resKey];
                 $clcFields = [];
                 if (isset($result['tableConfig']['tableInit']['buttons']) &&
                     (in_array('mfwClcFields', $result['tableConfig']['tableInit']['buttons']))) {
@@ -254,36 +252,11 @@ class Report
                         $clcFields[$key]['rpn']->parse(implode('', $formula['tags']));
                     }
                 }
-                $frmtRes = $this->tableFormatResult($result, $rows, $clcFields);
-                return $frmtRes === false ? $res : $frmtRes;
+                $this->tableFormatResult($result, $rows, $clcFields);
             }
             if (isset($result['pivotConfig'])) {
                 $frmtRes = $this->pivotFormatResult($result, $res);
-                return $frmtRes === false ? $res : $frmtRes;
             }
-            if (isset($result['twigConfig'])) {
-                $controller->addResponse([
-                    'setHTML' => [
-                        'selector' => '#twig_'.$this->reportDB['id'].'_'.$resKey,
-                        'html' => $this->twig->render(
-                            $result['twigConfig']['twig'],
-                            [
-                                'res' => $res,
-                                'report' => $this->reportDB,
-                                'formData' => $this->formData
-                            ]
-                        )
-                    ]
-                ]);
-            }
-        }
-        if (isset($this->reportDB['query']['multiUpload'])) {
-            $controller->addResponse([
-                'mfwFormMU:addUpload' => [
-                    'selector' => '#rep_'.$this->reportDB['id'].' .mfw-qry-form',
-                    'data' => $multiRes
-                ]
-            ]);
         }
         return $res;
     }
@@ -743,9 +716,7 @@ class Report
                     $res[$key]['CLC_'.$field['ID']] = $clcRes;
                 }
             }
-            $errorlevel = error_reporting();
         }
-        return $res;
     }
 
     private function pivotFormatResult($result, &$res)

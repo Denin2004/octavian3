@@ -1,5 +1,6 @@
 class MfwStringType {
-    static width = 60;
+    static width = 150;
+    static align = 'left';
 
     static render(text, record, index, column) {
         return text;

@@ -1,8 +1,6 @@
 <?php
 namespace App\ReportHandlers;
 
-use App\Form\Core\Grid\InlineEdit;
-
 class DefaultReportHandler
 {
     protected $callPrm;
@@ -20,22 +18,6 @@ class DefaultReportHandler
     public function isError()
     {
         return $this->error;
-    }
-
-    public function mfwNumFldConfig(&$column)
-    {
-    }
-
-    public function mfwNumFldResult(&$res, $key, $column, $row)
-    {
-    }
-
-    public function mfwIntFldConfig(&$column)
-    {
-    }
-
-    public function mfwIntFldResult(&$res, $key, $column, $row)
-    {
     }
 
     public function mfwDateTimeFldResult(&$res, $key, $column, $row)
@@ -79,7 +61,7 @@ class DefaultReportHandler
                 $res[$key][$column['data']]
             );
             if ($date === false) {
-                $res[$key][$column['data']] = $this->callPrm['translator']->trans('date.invalid_format');
+                $res[$key][$column['data']] = 'date.invalid_format';
             } else {
                 $res[$key][$column['data']] = $date->format($this->callPrm['siteConfig']->get('php_date_format'));
             }
@@ -102,58 +84,6 @@ class DefaultReportHandler
         )->format('YmdHisu');
     }
 
-    public function mfwCheckboxFldResult(&$res, $key, $column, $row)
-    {
-        $checked = $res[$key][$column['data']] == $column['checked'];
-        $res[$key][$column['data']] = $this->callPrm['templating']->render(
-            'core/grid/checkbox.html.twig',
-            [
-                'checked' => $checked,
-                'text' => isset($column['checked_text']) ? ($checked == true ? $column['checked_text'] : (isset($column['unchecked_text']) ? $column['unchecked_text'] : ''))
-                    : ($checked == true ? $column['checked'] : '')
-            ]
-        );
-    }
-
-    public function mfwCheckboxFldConfig(&$column)
-    {
-        $column['mfw_format'] = $this->callPrm['siteConfig']->get('js_int_format');
-        $column['className'] = isset($column['className']) ? $column['className'] : 'dt-body-center dt-foot-center dt-head-center';
-        $column['checked_text'] = isset($column['checked_text']) ? $column['checked_text'] : $column['checked'];
-    }
-
-    public function mfwIconFldResult(&$res, $key, $column, $row)
-    {
-        $res[$key][$column['data']] = $this->callPrm['templating']->render(
-            'core/grid/icon.html.twig',
-            [
-                'value' => $res[$key][$column['data']],
-                'icons' => $column['icons']
-            ]
-        );
-    }
-
-    public function mfwCheckboxinputFldResult(&$res, $key, $column, $row)
-    {
-        $checked = $column['checked'] == 'not empty' ? $res[$key][$column['data']] != '' :
-                    $res[$key][$column['data']] == $column['checked'];
-        $res[$key][$column['data']] = $this->callPrm['templating']->render(
-            'core/grid/checkbox_input.html.twig',
-            [
-                'checked' => $checked,
-                'url' => $this->callPrm['router']->generate(
-                    $column['action']['route'],
-                    $this->urlParams($column['action'], $row, $res[$key])
-                ),
-                'colName' => $column['data'],
-                'text' => [
-                    'checked' => $column['checked_text'],
-                    'unchecked' => $column['unchecked_text']
-                ]
-            ]
-        );
-    }
-
     public function mfwActionConfig(&$column)
     {
         $column['mfw_noexcel'] = true;
@@ -170,8 +100,7 @@ class DefaultReportHandler
                 $action,
                 $row,
                 $res[$key],
-                isset($action['textLink']) ? $this->callPrm['translator']->trans($action['textLink']) :
-                $this->callPrm['translator']->trans($action['title'])
+                isset($action['textLink']) ? $action['textLink'] : $action['title']
             );
         }
         $res[$key][$column['data']] = isset($res[$key][$column['data']]) ? $res[$key][$column['data']].implode('', $actions) : implode('', $actions);
@@ -197,7 +126,7 @@ class DefaultReportHandler
                         if (isset($row[$val[1]])) {
                             $column['actions'][$index][$actionType]['text'] = urlencode(ltrim(strip_tags($row[$val[1]])));
                         } else {
-                            $column['actions'][$index][$actionType]['text'] = $this->callPrm['translator']->trans('report.no_such_column').' '.$val[1];
+                            $column['actions'][$index][$actionType]['text'] = 'report.no_such_column '.$val[1];
                         }
                         break;
                     case 'qry':
@@ -205,11 +134,11 @@ class DefaultReportHandler
                         if (isset($formData[$val[1]])) {
                             $column['actions'][$index][$actionType]['text'] = urlencode($formData[$val[1]]);
                         } else {
-                            $column['actions'][$index][$actionType]['text'] = $this->callPrm['translator']->trans('report.no_such_query').' '.$val[1];
+                            $column['actions'][$index][$actionType]['text'] = 'report.no_such_query '.$val[1];
                         }
                         break;
                     case 'val':
-                        $column['actions'][$index][$actionType]['text'] = $this->callPrm['translator']->trans($val[1]);
+                        $column['actions'][$index][$actionType]['text'] = $val[1];
                         break;
                     case 'reportID':
                         $params[$key] = $this->callPrm['report']->get('reportID');
@@ -239,15 +168,10 @@ class DefaultReportHandler
             return;
         }
         if (isset($column['voc'][$res[$key][$column['data']]])) {
-            $res[$key][$column['data']] = $this->callPrm['translator']->trans($column['voc'][$res[$key][$column['data']]]);
+            $res[$key][$column['data']] = $column['voc'][$res[$key][$column['data']]];
         } else {
-            $res[$key][$column['data']] = $this->callPrm['translator']->trans('common.unknown_value');
+            $res[$key][$column['data']] = 'common.unknown_value';
         }
-    }
-
-    public function mfwDurationFldConfig(&$column)
-    {
-        $column['className'] = isset($column['className']) ? $column['className'] : 'dt-body-right dt-foot-right dt-head-right';
     }
 
     public function mfwDurationFldResult(&$res, $key, $column, $row)
@@ -256,56 +180,17 @@ class DefaultReportHandler
         $res[$key][$column['data']] = $this->controller->secsToDuration($res[$key][$column['data']]*(isset($column['pureSecs']) ? 1 : 3600));
     }
 
-    public function mfwHighlightFldConfig(&$column)
-    {
-        $column['mfw_type'] = 'num-html';
-    }
-
     public function mfwHighlightFldResult(&$res, $key, $column, $row)
     {
         $res[$key][$column['data']] = $this->controller->getHighlight($res[$key][$column['data']]);
     }
 
-    public function getLink($action, $row, $res, $title)
+    public function getLink($action, $row, $res)
     {
         $params = $this->urlParams($action, $row, $res);
-        if ($params === false) {
-            return (($title ==  '')or($title == ' ')or is_null($title)) ? '' : $title.' Error link params';
-        }
-        $attrs = isset($action['attrs']) ? $action['attrs'] : [];
-        if (isset($attrs['data-mfw_confirm'])) {
-            $attrs['data-mfw_confirm'] = $this->callPrm['translator']->trans($attrs['data-mfw_confirm']);
-        }
-        if (isset($action['ajax'])) {
-            return $this->callPrm['templating']->render(
-                'core/grid/span_link.html.twig',
-                [
-                    'item' => [
-                        'url' => $this->callPrm['router']->generate(
-                            $action['route'],
-                            $params
-                        ),
-                        'text' => $title,
-                        'attrs' => $attrs
-                    ]
-                ]
-            );
-        }
-        if (!isset($attrs['target'])) {
-            $attrs['target'] = '_blank';
-        }
-        return $this->callPrm['templating']->render(
-            'core/grid/a_link.html.twig',
-            [
-                'item' => [
-                    'url' => $this->callPrm['router']->generate(
-                        $action['route'],
-                        $params
-                    ),
-                    'text' => $title,
-                    'attrs' => $attrs
-                ]
-            ]
+        return $this->callPrm['router']->generate(
+            $action['route'],
+            $params
         );
     }
 
@@ -321,37 +206,15 @@ class DefaultReportHandler
 
     public function mfwLinkFldResult(&$res, $key, $column, $row)
     {
-        $res[$key][$column['data']] = $this->getLink(
+        $res[$key][$column['data'].'_LINK'] = $this->getLink(
             $column['action'],
             $row,
-            $res[$key],
-            isset($column['action']['textLink']) ?  $this->callPrm['translator']->trans($column['action']['textLink']) : $res[$key][$column['data']]
+            $res[$key]
         );
     }
 
     public function mfwInlineEditFldResult(&$res, $key, $column, $row)
     {
-        $form = $this->callPrm['formBuilder']->create(
-            InlineEdit::class,
-            [
-                'id' => $res[$key][$column['id']],
-                'value' => $res[$key][$column['data']]
-            ],
-            [
-                'action' => $this->callPrm['router']->generate(
-                    $column['action']['route'],
-                    $this->urlParams($column['action'], $row, $res[$key])
-                )
-            ]
-        );
-        $res[$key][$column['data']] = $this->callPrm['templating']->render(
-            'core/grid/inline_edit.html.twig',
-            [
-                'value' => $res[$key][$column['data']],
-                'form' => $form->createView(),
-                'column' => $column
-            ]
-        );
     }
 
     public function mfwChangeFldResult(&$res, $key, $column, $row)
@@ -392,14 +255,6 @@ class DefaultReportHandler
                     ];
                 }
                 break;
-        }
-        if (count($changes) != 0) {
-            $res[$key][$column['data']] = $this->callPrm['templating']->render(
-                'report/result/grid_cell_changes.html.twig',
-                [
-                    'changes' => $changes
-                ]
-            );
         }
     }
 
@@ -501,8 +356,6 @@ class DefaultReportHandler
 
     public function mfwNumRecFldConfig(&$column)
     {
-        $column['mfw_format'] = $this->callPrm['siteConfig']->get('js_int_format');
-        $column['className'] = isset($column['className']) ? $column['className'] : 'dt-body-right dt-foot-right dt-head-right';
     }
 
     public function mfwNumRecFldResult(&$res, $key, $column, $row)
@@ -512,12 +365,9 @@ class DefaultReportHandler
 
     public function mfwPctFldConfig(&$column)
     {
-        $column['mfw_format'] = $this->callPrm['siteConfig']->get('js_number_format');
-        $column['className'] = isset($column['className']) ? $column['className'] : 'dt-body-right dt-foot-right dt-head-right';
     }
 
     public function mfwPctFldResult(&$res, $key, $column, $row)
     {
-        $res[$key][$column['data']] = $this->controller->getNumberFormat($res[$key][$column['data']]*100, isset($column['dec']) ? $column['dec'] : null);
     }
 }

@@ -12,7 +12,8 @@
         <div id="root"></div>
         <script type="text/javascript">
             window.mfwApp = {
-                locale: "{{ locale }}"
+                locale: "{{ locale }}",
+                numeral: {{ numeral|json_encode|raw }}
             }
         </script>
         {{ encore_entry_script_tags('webApp') }}

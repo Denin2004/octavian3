@@ -92,7 +92,14 @@ services:
     App\Services\Report\Report:
         class: App\Services\Report\Report
         public: true
-        arguments: ['@App\Services\MyACP\MyACP', '@App\Services\SiteConfig\SiteConfig', '@request_stack', '@App\Services\RPN\RPNService', '@router', '@twig', '@form.factory']
+        arguments: [
+            '@App\Services\MyACP\MyACP', 
+            '@App\Services\SiteConfig\SiteConfig', 
+            '@request_stack', 
+            '@App\Services\RPN\RPNService', 
+            '@router', 
+            '@form.factory'
+        ]
 
     form.Range:
         class: App\Form\React\ReactRangeType

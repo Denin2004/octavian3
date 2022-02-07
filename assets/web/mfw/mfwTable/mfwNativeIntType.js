@@ -2,12 +2,12 @@ import React, {Component} from 'react';
 
 import MfwInteger from '@app/web/mfw/MfwInteger';
 
-class MfwIntType {
+class MfwNativeIntType {
     static width = 100;
     static align = 'right';
     
     static render(text, record, index, column) {
-        return <MfwInteger value={text}/>;
+        return text;
     }
 
     static sorter(a, b, column) {
@@ -74,4 +74,4 @@ class MfwIntType {
     }    
 };
 
-export default MfwIntType;
+export default MfwNativeIntType;
