@@ -334,7 +334,7 @@ class MfwTable extends Component {
                 const totalIndex = this.state.groups.grid[rowIndex].group.totals.map(total => total.column.dataIndex).indexOf(this.state.row.columns[columnIndex].dataIndex);
                 return <div className={classNames('virtual-table-cell', {
                     'virtual-table-cell-last': columnIndex === this.state.row.columns.length - 1,
-                     }, 'mfw-align-'+this.state.row.columns[columnIndex].align)} style={style}>
+                     }, 'mfw-font-bold mfw-align-'+this.state.row.columns[columnIndex].align)} style={style}>
                     { mfwColumnTypes[this.state.row.columns[columnIndex].types[0]].renderTotal(
                         this.state.row.columns[columnIndex].mfw_total_group, 
                         this.state.groups.grid[rowIndex].group.totals[totalIndex].results
