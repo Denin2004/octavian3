@@ -16,6 +16,7 @@ import MfwCheckboxType from '@app/web/mfw/mfwTable/mfwCheckboxType';
 import MfwDateType from '@app/web/mfw/mfwTable/mfwDateType';
 import MfwDateTimeType from '@app/web/mfw/mfwTable/mfwDateTimeType';
 import MfwDateTimeMilliType from '@app/web/mfw/mfwTable/mfwDateTimeMilliType';
+import MfwColVis from '@app/web/mfw/mfwTable/buttons/mfwColVis';
 
 const mfwColumnTypes = {
     'mfw-string': MfwStringType,
@@ -31,6 +32,7 @@ const mfwColumnTypes = {
 };
 
 class MfwTable extends Component {
+    
     constructor(props){
         super(props);
         this.renderVirtualList = this.renderVirtualList.bind(this);
@@ -44,13 +46,14 @@ class MfwTable extends Component {
         this.groupRowRender = this.groupRowRender.bind(this);
         this.groupDetails = this.groupDetails.bind(this);
         this.groupRowButton = this.groupRowButton.bind(this);
-        var tableHead = [...this.props.mfwColumns],
+        this.buttons = this.buttons.bind(this);
+        var tableHead = [...this.props.mfwConfig.tableInit.columns],
             rowColumns = [],
             filters = [],
             groups = [],
             groupTotals = [],
             dataSource = [...this.props.mfwData],
-            colGroup = this.props.colGroup ? this.props.colGroup : [],
+            colGroup = this.props.mfwConfig.extended && this.props.mfwConfig.extended.colGroup ? [this.props.mfwConfig.extended.colGroup] : [],
             rowColumn = (column) => {
                 if (column.children) {
                     column.width = 0;
@@ -92,7 +95,7 @@ class MfwTable extends Component {
         tableHead.map((column) => {
             rowColumn(column);
         });
-        if (this.props.multiSelect) {
+        if (this.props.mfwConfig.tableInit.select) {
             var selectColumn = {
                 title: () => <Checkbox
                        indeterminate={this.state.row.selected.keys.length != 0 && this.state.row.selected.keys.length != this.state.row.selected.allCount}
@@ -409,6 +412,17 @@ class MfwTable extends Component {
         this.setState(state => {
             if (extra.action == 'filter') {
                 state.row.selected.keys = [];
+                state.column.filters.map(filterColumn => {
+                    filterColumn.filters = [];
+                });
+                extra.currentDataSource.map( row => {
+                    state.column.filters.map(filterColumn => {
+                        var index = filterColumn.filters.findIndex(x => x.value==row[filterColumn.dataIndex]);
+                        if (index == -1) {
+                            filterColumn.filters.push({text: mfwColumnTypes[filterColumn.types[0]].renderFilter(row, filterColumn), value: row[filterColumn.dataIndex]});
+                        }
+                   });
+               });
             }
             state.table.currentData = extra.currentDataSource;
             if (state.groups.columns.length != 0) {
@@ -535,22 +549,47 @@ class MfwTable extends Component {
         this.setState({ selectedRowKeys });
     };
 
+    showVis(p) {
+        console.log(p);
+    }
+    
+    buttons() {
+        return <div>{
+        this.props.mfwConfig.tableInit.buttons.map((button, i) => {
+            if (typeof button === 'string') {
+                switch(button) {
+                    case 'mfwColVis':
+                        return <MfwColVis 
+                           key={i} 
+                           setColVis={this.showVis}
+                           all={this.props.mfwConfig.tableInit.columns}
+                           visible={this.state.row.columns}
+                           />;
+                }
+            }
+        })
+        }</div>
+    }
+
     render() {
         return (
+            <div className="flex">
+                <div className="header">{this.props.mfwConfig.tableInit.buttons ? this.buttons() : null}</div>
             <ResizeObserver onResize={this.setTableWidth}>
-              <Table
-                {...this.props}
-                dataSource={this.state.table.dataSource}
-                className="virtual-table"
-                columns={this.state.table.head}
-                pagination={false}
-                rowKey="rowKey"
-                components={{
-                  body: this.renderVirtualList
-                }}
-                onChange={this.onChange}
-              />
+                <Table
+                  {...this.props}
+                  dataSource={this.state.table.dataSource}
+                  className="virtual-table"
+                  columns={this.state.table.head}
+                  pagination={false}
+                  rowKey="rowKey"
+                  components={{
+                    body: this.renderVirtualList
+                  }}
+                  onChange={this.onChange}
+                />
             </ResizeObserver>
+            </div>
         );
     }
 }

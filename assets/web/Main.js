@@ -10,7 +10,7 @@ import { withTranslation } from 'react-i18next';
 
 import axios from 'axios';
 
-import Report from '@app/web/Report';
+import Report from '@app/web/report/Main';
 import Test from '@app/web/Test';
 
 class Main extends Component {
