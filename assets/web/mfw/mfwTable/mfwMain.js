@@ -47,13 +47,116 @@ class MfwTable extends Component {
         this.groupDetails = this.groupDetails.bind(this);
         this.groupRowButton = this.groupRowButton.bind(this);
         this.buttons = this.buttons.bind(this);
-        var tableHead = [...this.props.mfwConfig.tableInit.columns],
-            rowColumns = [],
-            filters = [],
-            groups = [],
-            groupTotals = [],
-            dataSource = [...this.props.mfwData],
-            colGroup = this.props.mfwConfig.extended && this.props.mfwConfig.extended.colGroup ? [this.props.mfwConfig.extended.colGroup] : [],
+        this.perform = this.perform.bind(this);
+        this.setVisibleColumns = this.setVisibleColumns.bind(this);
+        var visible = [],
+            currentData = [...this.props.mfwData],
+            colGroup = this.props.mfwConfig.extended && this.props.mfwConfig.extended.colGroup ? [this.props.mfwConfig.extended.colGroup] : [];
+        this.props.mfwConfig.tableInit.columns.map((column) => {
+            var dataIndex = column.dataIndex ? column.dataIndex : column.data;
+            if ((column.visible == undefined)||
+                (column.visible && column.visible === true)||
+                (colGroup.findIndex(col => col === dataIndex) != -1)) {
+                visible.push(dataIndex);
+            }
+        });
+        if (colGroup.length != 0) {
+            colGroup.map((col, index) => {
+                if (!col.order) {
+                    colGroup[index] = {
+                        name: col,
+                        order: 'ascend'
+                    }
+                }
+            });
+            currentData.sort((a, b) => {return this.multipleSort(a, b, this.state.groups.columns, res.table.head)});
+        }
+        this.state = {
+            table: {
+                width: 0,
+                height: 0,
+                head: [],
+                currentData: currentData,
+                dataSource: currentData
+            },
+            row: {
+                height: 43,
+                selected: {
+                    keys: [],
+                    allCount: this.props.mfwConfig.extended && this.props.mfwConfig.extended.colGroup ? this.props.mfwData.length : 0
+                }
+            },
+            column: {
+                filters: [],
+                visible: []
+            },
+            groups: {
+               totals: [],
+               data: [],
+               columns: colGroup,
+               grid: []
+            },
+            gridRef: React.createRef()
+        };
+        var conf = this.perform({
+            visible: visible,
+            columns: [...this.props.mfwConfig.tableInit.columns]
+        });
+        this.state.table.head = conf.table.head;
+        this.state.column.filters = conf.column.filters;
+        this.state.column.visible = conf.column.visible;
+        if (this.state.groups.columns.length != 0) {
+            this.state.groups.totals = conf.groups.totals;
+            currentData.sort((a, b) => {return this.multipleSort(a, b, this.state.groups.columns, this.state.table.head)});
+            this.state.groups.data = this.groupCalcAll(currentData, this.state.groups.columns, this.state.groups.totals, []);
+            this.state.groups.grid = this.groupGrid(this.state.groups.data);
+        }
+    }
+
+    componentDidUpdate(prev) {
+        if ((prev.loading === true)&&(this.props.loading === false)) {
+            var dataSource = [...this.props.mfwData],
+                groups = [];
+            if (this.state.groups.columns.length != 0) {
+                dataSource.sort((a, b) => {return this.multipleSort(a, b, this.state.groups.columns, this.state.table.head)});
+                groups = this.groupCalcAll(dataSource, this.state.groups.columns, this.state.groups.totals, []);
+            }
+            if (this.state.column.filters.length != 0) {
+                dataSource.map( (row, i) => {
+                    row.rowKey = i;
+                    this.state.column.filters.map(filterColumn => {
+                        var index = filterColumn.filters.findIndex(x => x.value==row[filterColumn.dataIndex]);
+                        if (index == -1) {
+                            filterColumn.filters.push({text: mfwColumnTypes[filterColumn.types[0]].renderFilter(row, filterColumn), value: row[filterColumn.dataIndex]});
+                        }
+                   });
+               });
+            }
+            this.setState( state => {
+                state.groups.data = groups;
+                state.groups.grid = this.groupGrid(groups);
+                state.table.currentData = dataSource;
+                state.table.dataSource = dataSource;
+                state.row.selected.keys = [];
+                state.row.selected.allCount = state.groups.columns.length == 0 ? dataSource.length : 0;
+                return state;
+            });
+        }        
+    }
+
+    perform(data) {
+        var res = {
+                table: {
+                    head: []
+                },
+                column: {
+                    filters: [],
+                    visible: data.visible
+                },
+                groups: {
+                   totals: []
+                }            
+            },
             rowColumn = (column) => {
                 if (column.children) {
                     column.width = 0;
@@ -80,20 +183,22 @@ class MfwTable extends Component {
                 if (column.mfw_filter) {
                     column.filters = [];
                     column.onFilter = (value, record) => record[column.dataIndex] != null ? record[column.dataIndex].indexOf(value) === 0 : false;
-                    filters.push(column);
+                    res.column.filters.push(column);
                 }
                 column.width = column.width ? column.width : mfwColumnTypes['mfw-string'].width;
                 if (column.mfw_total_group) {
-                    groupTotals.push(column);
+                    res.groups.totals.push(column);
                 }
                 column.dataIndex = column.dataIndex ? column.dataIndex : column.data;
                 if (column.title != undefined) {
                     column.title = this.props.t(column.title);
                 }
-                rowColumns.push(column);
+                res.table.head.push(column);
             };
-        tableHead.map((column) => {
-            rowColumn(column);
+        this.props.mfwConfig.tableInit.columns.map((column) => {
+            if (data.visible.findIndex(x => x === (column.dataIndex ? column.dataIndex : column.data)) != -1) {
+                rowColumn(column);
+            }
         });
         if (this.props.mfwConfig.tableInit.select) {
             var selectColumn = {
@@ -106,32 +211,20 @@ class MfwTable extends Component {
                 render: this.selectRowRender,
                 width: 50
             };
-            tableHead.unshift(selectColumn);
-            rowColumns.unshift(selectColumn);
+            res.table.head.unshift(selectColumn);
         }
-        if (colGroup.length != 0) {
-            colGroup.map((col, index) => {
-                if (!col.order) {
-                    colGroup[index] = {
-                        name: col,
-                        order: 'ascend'
-                    }
-                }
-            });
+        if (this.state.groups.columns.length != 0) {
             var groupColumn = {
                 title: '',
                 dataIndex: 'mfwGroup',
                 render: this.groupRowButton,
-                width: colGroup.length*16+32 //32 - padding
+                width: this.state.groups.columns.length*16+32 //32 - padding
             };
-            tableHead.unshift(groupColumn);
-            rowColumns.unshift(groupColumn);
-            dataSource.sort((a, b) => {return this.multipleSort(a, b, colGroup, rowColumns)});
-            groups = this.groupCalcAll(dataSource, colGroup, groupTotals, []);
+            res.table.head.unshift(groupColumn);
         }
-        if (filters.lenght != 0) {
-            dataSource.map( row => {
-                filters.map(filterColumn => {
+        if (res.column.filters.length != 0) {
+            this.state.table.currentData.map( row => {
+                res.column.filters.map(filterColumn => {
                     var index = filterColumn.filters.findIndex(x => x.value==row[filterColumn.dataIndex]);
                     if (index == -1) {
                         filterColumn.filters.push({text: mfwColumnTypes[filterColumn.types[0]].renderFilter(row, filterColumn), value: row[filterColumn.dataIndex]});
@@ -139,64 +232,7 @@ class MfwTable extends Component {
                });
            });
         }
-        this.state = {
-            table: {
-                width: 0,
-                height: 0,
-                head: tableHead,
-                currentData: dataSource,
-                dataSource: dataSource
-            },
-            row: {
-                height: 43,
-                columns: rowColumns,
-                selected: {
-                    keys: [],
-                    allCount: colGroup.length == 0 ? dataSource.length : 0
-                }
-            },
-            column: {
-                filters: filters
-            },
-            groups: {
-               totals: groupTotals,
-               data: groups,
-               columns: colGroup ,
-               grid: this.groupGrid(groups)
-            },
-            gridRef: React.createRef()
-        };
-    }
-
-    componentDidUpdate(prev) {
-        if ((prev.loading === true)&&(this.props.loading === false)) {
-            var dataSource = [...this.props.mfwData],
-                groups = [];
-            if (this.state.groups.columns.length != 0) {
-                dataSource.sort((a, b) => {return this.multipleSort(a, b, this.state.groups.columns, this.state.row.columns)});
-                groups = this.groupCalcAll(dataSource, this.state.groups.columns, this.state.groups.totals, []);
-            }
-            if (this.state.column.filters.lenght != 0) {
-                dataSource.map( (row, i) => {
-                    row.rowKey = i;
-                    this.state.column.filters.map(filterColumn => {
-                        var index = filterColumn.filters.findIndex(x => x.value==row[filterColumn.dataIndex]);
-                        if (index == -1) {
-                            filterColumn.filters.push({text: mfwColumnTypes[filterColumn.types[0]].renderFilter(row, filterColumn), value: row[filterColumn.dataIndex]});
-                        }
-                   });
-               });
-            }
-            this.setState( state => {
-                state.groups.data = groups;
-                state.groups.grid = this.groupGrid(groups);
-                state.table.currentData = dataSource;
-                state.table.dataSource = dataSource;
-                state.row.selected.keys = [];
-                state.row.selected.allCount = state.groups.columns.length == 0 ? dataSource.length : 0;
-                return state;
-            });
-        }        
+        return res;
     }
 
     selectRowRender(text, record, index) {
@@ -323,44 +359,44 @@ class MfwTable extends Component {
     
     groupRowRender(columnIndex, rowIndex, style) {
         if (this.state.groups.grid[rowIndex].group != undefined) {
-            if (this.state.row.columns[columnIndex].dataIndex == this.state.groups.grid[rowIndex].group.dataIndex) {
+            if (this.state.table.head[columnIndex].dataIndex == this.state.groups.grid[rowIndex].group.dataIndex) {
                 return <div className={classNames('virtual-table-cell', {
-                        'virtual-table-cell-last': columnIndex === this.state.row.columns.length - 1,
-                      }, 'mfw-align-'+this.state.row.columns[columnIndex].align)} style={style}>
-                          {this.state.row.columns[columnIndex].render(
-                              this.state.table.currentData[this.state.groups.grid[rowIndex].group.firstIndex][this.state.row.columns[columnIndex].dataIndex],
+                        'virtual-table-cell-last': columnIndex === this.state.table.head.length - 1,
+                      }, 'mfw-align-'+this.state.table.head[columnIndex].align)} style={style}>
+                          {this.state.table.head[columnIndex].render(
+                              this.state.table.currentData[this.state.groups.grid[rowIndex].group.firstIndex][this.state.table.head[columnIndex].dataIndex],
                               this.state.table.currentData[this.state.groups.grid[rowIndex].group.firstIdex],
                               this.state.groups.grid[rowIndex].firstIndex)}
                     </div>;
             }
-            if (this.state.row.columns[columnIndex].mfw_total_group) {
-                const totalIndex = this.state.groups.grid[rowIndex].group.totals.map(total => total.column.dataIndex).indexOf(this.state.row.columns[columnIndex].dataIndex);
+            if (this.state.table.head[columnIndex].mfw_total_group) {
+                const totalIndex = this.state.groups.grid[rowIndex].group.totals.map(total => total.column.dataIndex).indexOf(this.state.table.head[columnIndex].dataIndex);
                 return <div className={classNames('virtual-table-cell', {
-                    'virtual-table-cell-last': columnIndex === this.state.row.columns.length - 1,
-                     }, 'mfw-font-bold mfw-align-'+this.state.row.columns[columnIndex].align)} style={style}>
-                    { mfwColumnTypes[this.state.row.columns[columnIndex].types[0]].renderTotal(
-                        this.state.row.columns[columnIndex].mfw_total_group, 
+                    'virtual-table-cell-last': columnIndex === this.state.table.head.length - 1,
+                     }, 'mfw-font-bold mfw-align-'+this.state.table.head[columnIndex].align)} style={style}>
+                    { mfwColumnTypes[this.state.table.head[columnIndex].types[0]].renderTotal(
+                        this.state.table.head[columnIndex].mfw_total_group, 
                         this.state.groups.grid[rowIndex].group.totals[totalIndex].results
                     )}
                     </div>
             }
             if (columnIndex == 0) {
                 return <div className={classNames('virtual-table-cell', {
-                    'virtual-table-cell-last': columnIndex === this.state.row.columns.length - 1,
-                     }, 'mfw-align-'+this.state.row.columns[columnIndex].align)} style={style}>
-                    {this.state.row.columns[columnIndex].render('', this.state.groups.grid[rowIndex], rowIndex)}                     
+                    'virtual-table-cell-last': columnIndex === this.state.table.head.length - 1,
+                     }, 'mfw-align-'+this.state.table.head[columnIndex].align)} style={style}>
+                    {this.state.table.head[columnIndex].render('', this.state.groups.grid[rowIndex], rowIndex)}                     
                 </div>                
             }
             return <div className={classNames('virtual-table-cell', {
-                'virtual-table-cell-last': columnIndex === this.state.row.columns.length - 1,
-                 }, 'mfw-align-'+this.state.row.columns[columnIndex].align)} style={style}></div>
+                'virtual-table-cell-last': columnIndex === this.state.table.head.length - 1,
+                 }, 'mfw-align-'+this.state.table.head[columnIndex].align)} style={style}></div>
         }
         if (this.state.groups.grid[rowIndex].rowIndex != undefined) {
             return <div className={classNames('virtual-table-cell', {
-                      'virtual-table-cell-last': columnIndex === this.state.row.columns.length - 1,
-                    }, 'mfw-align-'+this.state.row.columns[columnIndex].align)} style={style}>
-                        {this.state.row.columns[columnIndex].render(
-                            this.state.table.currentData[this.state.groups.grid[rowIndex].rowIndex][this.state.row.columns[columnIndex].dataIndex],
+                      'virtual-table-cell-last': columnIndex === this.state.table.head.length - 1,
+                    }, 'mfw-align-'+this.state.table.head[columnIndex].align)} style={style}>
+                        {this.state.table.head[columnIndex].render(
+                            this.state.table.currentData[this.state.groups.grid[rowIndex].rowIndex][this.state.table.head[columnIndex].dataIndex],
                             this.state.table.currentData[this.state.groups.grid[rowIndex].rowIndex],
                             this.state.groups.grid[rowIndex].rowIndex)}
                     </div>
@@ -439,7 +475,7 @@ class MfwTable extends Component {
                             });
                         }
                     }
-                    state.table.currentData.sort((a, b) => {return this.multipleSort(a, b, sortColumns, state.row.columns)});
+                    state.table.currentData.sort((a, b) => {return this.multipleSort(a, b, sortColumns, state.table.head)});
                 }
                 var openGroups = [];
                 state.groups.grid.map(row => {
@@ -479,10 +515,10 @@ class MfwTable extends Component {
                 <VariableSizeGrid
                     ref={this.state.gridRef}
                     className="virtual-grid"
-                    columnCount={this.state.row.columns.length}
+                    columnCount={this.state.table.head.length}
                     columnWidth={(index) => {
-                        const { width } = this.state.row.columns[index];
-                        return totalHeight > this.props.scroll.y && index === this.state.row.columns.length - 1
+                        const { width } = this.state.table.head[index];
+                        return totalHeight > this.props.scroll.y && index === this.state.table.head.length - 1
                              ? width - scrollbarSize - 1
                       : width;
                     }}
@@ -505,10 +541,10 @@ class MfwTable extends Component {
             <VariableSizeGrid
                 ref={this.state.gridRef}
                 className="virtual-grid"
-                columnCount={this.state.row.columns.length}
+                columnCount={this.state.table.head.length}
                 columnWidth={(index) => {
-                    const { width } = this.state.row.columns[index];
-                    return totalHeight > this.props.scroll.y && index === this.state.row.columns.length - 1
+                    const { width } = this.state.table.head[index];
+                    return totalHeight > this.props.scroll.y && index === this.state.table.head.length - 1
                          ? width - scrollbarSize - 1
                   : width;
                 }}
@@ -525,10 +561,10 @@ class MfwTable extends Component {
                 {({ columnIndex, rowIndex, style }) => {
                     return (
                     <div className={classNames('virtual-table-cell', {
-                      'virtual-table-cell-last': columnIndex === this.state.row.columns.length - 1,
-                    }, 'mfw-align-'+this.state.row.columns[columnIndex].align)} style={style}>
-                        {this.state.row.columns[columnIndex].render(
-                            rawData[rowIndex][this.state.row.columns[columnIndex].dataIndex],
+                      'virtual-table-cell-last': columnIndex === this.state.table.head.length - 1,
+                    }, 'mfw-align-'+this.state.table.head[columnIndex].align)} style={style}>
+                        {this.state.table.head[columnIndex].render(
+                            rawData[rowIndex][this.state.table.head[columnIndex].dataIndex],
                             rawData[rowIndex],
                             rowIndex)}
                     </div>
@@ -549,8 +585,22 @@ class MfwTable extends Component {
         this.setState({ selectedRowKeys });
     };
 
-    showVis(p) {
-        console.log(p);
+    setVisibleColumns(visible) {
+        var conf = this.perform({
+            visible: visible,
+            columns: [...this.props.mfwConfig.tableInit.columns]
+        });
+        this.setState( state => {
+            state.table.head = conf.table.head;
+            state.column.filters = conf.column.filters;
+            state.column.visible = conf.column.visible;
+            if (state.groups.columns.length != 0) {
+                state.groups.totals = conf.groups.totals;
+                state.groups.data = this.groupCalcAll(state.table.currentData, state.groups.columns, state.groups.totals, []);
+                state.groups.grid = this.groupGrid(state.groups.data);
+            }   
+            return state;
+        })
     }
     
     buttons() {
@@ -561,9 +611,9 @@ class MfwTable extends Component {
                     case 'mfwColVis':
                         return <MfwColVis 
                            key={i} 
-                           setColVis={this.showVis}
+                           setColVis={this.setVisibleColumns}
                            all={this.props.mfwConfig.tableInit.columns}
-                           visible={this.state.row.columns}
+                           visible={this.state.column.visible}
                            />;
                 }
             }

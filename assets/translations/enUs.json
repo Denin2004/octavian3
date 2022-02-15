@@ -907,8 +907,12 @@
     "_chart": "Chart"
   },
   "grid": {
-    "search_columns": "Search columns",
-    "hide_view_columns": "Hide, view columns",
+    "column": {
+        "search": "Search columns",
+        "hide_view": "Hide, view columns",
+        "hidden": "Hidden columns",
+        "visible": "Visible columns"
+    },
     "errors": {
       "columns_json": "Wrong columns json"
     },

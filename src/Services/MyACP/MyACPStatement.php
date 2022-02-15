@@ -125,10 +125,9 @@ class MyACPStatement extends OCI8Statement
         $this->freeLOB($params['lobs']);
         foreach ($cursors as $key => $cursor) {
             oci_execute($cursor);
-            $resCur = [];
-            oci_fetch_all($cursor, $resCur, 0, -1, OCI_FETCHSTATEMENT_BY_ROW + OCI_ASSOC);
+            $res[$params['cursors'][$key]] = [];
+            oci_fetch_all($cursor, $res[$params['cursors'][$key]], 0, -1, OCI_FETCHSTATEMENT_BY_ROW + OCI_ASSOC);
             oci_free_statement($cursor);
-            $res[$params['cursors'][$key]] = $resCur;
         }
         if ($isAutoCommit) {
             $this->_conn->commit();
