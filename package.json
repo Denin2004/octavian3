@@ -17,6 +17,7 @@
         "build": "encore production --progress"
     },
     "dependencies": {
+        "@ant-design/charts": "^1.3.5",
         "@babel/preset-react": "^7.16.7",
         "@fortawesome/fontawesome-svg-core": "^1.2.36",
         "@fortawesome/free-solid-svg-icons": "^5.15.4",

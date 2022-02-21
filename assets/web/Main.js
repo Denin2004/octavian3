@@ -18,7 +18,7 @@ class Main extends Component {
         super(props);
         this.state = {loading: true}
     }
-    
+
     componentDidMount() {
         axios.get(
             '/config',
@@ -45,7 +45,7 @@ class Main extends Component {
             } else {
                 message.error(error.toString());
             }
-        });        
+        });
     }
 
     render() {
@@ -65,13 +65,14 @@ class Main extends Component {
                             <Menu.Item key="9">Option 8</Menu.Item>
                         </Menu.SubMenu>
                         <Menu.Item key="10" icon={<Link to={generatePath('/report/page/:id', {id: 47})}><FontAwesomeIcon icon={faBug}/><div className="ant-menu-title-content">Test report</div></Link>}/>
-                    </Menu>                        
+                        <Menu.Item key="11" icon={<Link to={generatePath('/report/page/:id', {id: 97})}><FontAwesomeIcon icon={faBug}/><div className="ant-menu-title-content">Test report</div></Link>}/>
+                    </Menu>
                 </Layout.Sider>
                 <Layout>
-                    {this.state.loading ? 
+                    {this.state.loading ?
                     <Layout.Content>
                         <Spin/>
-                    </Layout.Content> : 
+                    </Layout.Content> :
                     <Switch>
                         <Route path="/report/page/:id(\d+)" component={Report} />
                     </Switch>

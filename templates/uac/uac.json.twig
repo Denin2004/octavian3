@@ -6,18 +6,11 @@
                 "access": true,
                 "routes": [
                     "dashboard",
-                    "getGamingTime",
-                    "systemSearchData",
-                    "systemSearchShow",
-                    "reportRefresh",
-                    "systemSetLocale",
-                    "locationStations",
-                    "reportViewPlayer",
-                    "reportSetPlayer",
-                    "appConfig"
+                    "appConfig",
+                    "gridExcel"
                 ]
             }
-        },    
+        },
         "report.all": {
         {% for rep in reports %}
             "{{rep.NAME}}": {

@@ -3,7 +3,9 @@ import classNames from 'classnames';
 
 import { VariableSizeGrid } from 'react-window';
 import ResizeObserver from 'rc-resize-observer';
-import { Table, Tag, Space, Checkbox } from 'antd';
+import { Table, Tag, Space, Checkbox, Button } from 'antd';
+import { faFileExcel } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import { withTranslation } from 'react-i18next';
 
@@ -49,6 +51,8 @@ class MfwTable extends Component {
         this.buttons = this.buttons.bind(this);
         this.perform = this.perform.bind(this);
         this.setVisibleColumns = this.setVisibleColumns.bind(this);
+        this.excel = this.excel.bind(this);
+//        this.ref = React.createRef();
         var visible = [],
             currentData = [...this.props.mfwData],
             colGroup = this.props.mfwConfig.extended && this.props.mfwConfig.extended.colGroup ? [this.props.mfwConfig.extended.colGroup] : [];
@@ -96,7 +100,7 @@ class MfwTable extends Component {
                columns: colGroup,
                grid: []
             },
-            gridRef: React.createRef()
+            mount: false
         };
         var conf = this.perform({
             visible: visible,
@@ -112,6 +116,16 @@ class MfwTable extends Component {
             this.state.groups.grid = this.groupGrid(this.state.groups.data);
         }
     }
+    
+    componentDidMount() {
+        this.ref = React.createRef();
+        this.setState({mount: true})
+    }    
+    
+    componentWillUnmount() {
+        this.ref = null;
+        this.setState({mount: false});
+    }        
 
     componentDidUpdate(prev) {
         if ((prev.loading === true)&&(this.props.loading === false)) {
@@ -365,7 +379,7 @@ class MfwTable extends Component {
                       }, 'mfw-align-'+this.state.table.head[columnIndex].align)} style={style}>
                           {this.state.table.head[columnIndex].render(
                               this.state.table.currentData[this.state.groups.grid[rowIndex].group.firstIndex][this.state.table.head[columnIndex].dataIndex],
-                              this.state.table.currentData[this.state.groups.grid[rowIndex].group.firstIdex],
+                              this.state.table.currentData[this.state.groups.grid[rowIndex].group.firstIndex],
                               this.state.groups.grid[rowIndex].firstIndex)}
                     </div>;
             }
@@ -513,7 +527,6 @@ class MfwTable extends Component {
             const totalHeight = this.state.groups.grid.length * this.state.row.height;
             return this.state.table.width == 0 ? (<React.Fragment/>) : (
                 <VariableSizeGrid
-                    ref={this.state.gridRef}
                     className="virtual-grid"
                     columnCount={this.state.table.head.length}
                     columnWidth={(index) => {
@@ -539,7 +552,6 @@ class MfwTable extends Component {
         const totalHeight = rawData.length * this.state.row.height;
         return this.state.table.width == 0 ? (<React.Fragment/>) : (
             <VariableSizeGrid
-                ref={this.state.gridRef}
                 className="virtual-grid"
                 columnCount={this.state.table.head.length}
                 columnWidth={(index) => {
@@ -574,6 +586,9 @@ class MfwTable extends Component {
     }
 
     setTableWidth(params) {
+        if (!this.state.mount) {
+            return;
+        }
         this.setState((state) => {
             state.table.width = params.width;
             state.table.height = params.height;
@@ -603,6 +618,16 @@ class MfwTable extends Component {
         })
     }
     
+    excel() {
+        var data = {
+            data: this.state.groups.columns.length != 0 ? this.state.groups.grid : this.state.table.currentData,
+            columns: this.state.table.head,
+            head: this.props.mfwConfig.extended && this.props.mfwConfig.extended.thead ? 
+              this.ref.current.getElementsByClassName('ant-table-thead').outerHTML : false
+        };
+        console.log(data);
+    }
+    
     buttons() {
         return <div>{
         this.props.mfwConfig.tableInit.buttons.map((button, i) => {
@@ -615,6 +640,8 @@ class MfwTable extends Component {
                            all={this.props.mfwConfig.tableInit.columns}
                            visible={this.state.column.visible}
                            />;
+                    case 'mfwExcel':
+                        return <Button onClick={this.excel} key={i}><FontAwesomeIcon icon={faFileExcel}/></Button>
                 }
             }
         })
@@ -625,20 +652,21 @@ class MfwTable extends Component {
         return (
             <div className="flex">
                 <div className="header">{this.props.mfwConfig.tableInit.buttons ? this.buttons() : null}</div>
-            <ResizeObserver onResize={this.setTableWidth}>
-                <Table
-                  {...this.props}
-                  dataSource={this.state.table.dataSource}
-                  className="virtual-table"
-                  columns={this.state.table.head}
-                  pagination={false}
-                  rowKey="rowKey"
-                  components={{
-                    body: this.renderVirtualList
-                  }}
-                  onChange={this.onChange}
-                />
-            </ResizeObserver>
+                <ResizeObserver onResize={this.setTableWidth}>
+                    <Table
+                      {...this.props}
+                      dataSource={this.state.table.dataSource}
+                      className="virtual-table"
+                      columns={this.state.table.head}
+                      pagination={false}
+                      rowKey="rowKey"
+                      components={{
+                        body: this.renderVirtualList
+                      }}
+                      onChange={this.onChange}
+                      ref={this.ref}
+                    />
+                </ResizeObserver>
             </div>
         );
     }

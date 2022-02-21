@@ -1,0 +1,4 @@
+gridExcel:
+    path: /excel
+    controller: App\Controller\Core\Grid\Excel::index
+    methods: [POST]

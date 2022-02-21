@@ -21,6 +21,10 @@ report:
     resource: 'routes/report.yaml'
     prefix: /report
     
+grid:
+    prefix: /grid
+    resource: 'routes/grid.yaml'        
+    
 machines:
     prefix: /machines
     resource: 'routes/machines.yaml'    

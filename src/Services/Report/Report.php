@@ -389,6 +389,22 @@ class Report
 
     public function parseResults()
     {
+        foreach ($this->reportDB['results'] as $key => $result) {
+            if (isset($result['tableConfig'])) {
+                if (isset($result['tableConfig']['extended'])) {
+                    if (isset($result['tableConfig']['extended']['thead'])) {
+                        foreach ($result['tableConfig']['extended']['thead'] as $headKey => $head) {
+                            if ($headKey != 'react') {
+                                unset($this->reportDB['results'][$key]['tableConfig']['extended']['thead'][$headKey]);
+                            }
+                        }
+                    }
+/* !!!!! Надо!!!!!                   if (isset($result['tableConfig']['extended']['subTableURL'])) {
+                        $this->reportDB['results'][$key]['tableConfig']['extended']['subTableURL'] = $this->generateURL($result['tableConfig']['extended']['subTableURL']);
+                    }*/
+                }
+            }
+        }
         return $this->reportDB['results'];
         $results = [];
         foreach ($this->reportDB['results'] as $key => $res) {
@@ -564,17 +580,12 @@ class Report
             }
         }
         if (isset($result['tableConfig']['extended'])) {
-            if (isset($result['tableConfig']['extended']['thead'])&&
-                isset($result['tableConfig']['extended']['thead']['json'])) {
-                $tag = array_keys($result['tableConfig']['extended']['thead']['json'])[0];
-                $result['tableConfig']['extended']['thead']['html'] = $this->theadParse($result['tableConfig']['extended']['thead']['json']);
-                unset($result['tableConfig']['extended']['thead']['json']);
-            }
-            if (isset($result['tableConfig']['extended']['tfoot'])&&
-                isset($result['tableConfig']['extended']['tfoot']['json'])) {
-                $tag = array_keys($result['tableConfig']['extended']['tfoot']['json'])[0];
-                $result['tableConfig']['extended']['tfoot']['html'] = $this->theadParse($result['tableConfig']['extended']['tfoot']['json']);
-                unset($result['tableConfig']['extended']['tfoot']['json']);
+            if (isset($result['tableConfig']['extended']['thead'])) {
+                foreach ($result['tableConfig']['extended']['thead'] as $key => $head) {
+                    if ($key != 'react') {
+                        unset($result['tableConfig']['extended']['thead'][$key]);
+                    }
+                }
             }
             if (isset($result['tableConfig']['extended']['subTableURL'])) {
                 $result['tableConfig']['extended']['subTableURL'] = $this->generateURL($result['tableConfig']['extended']['subTableURL']);
@@ -596,17 +607,6 @@ class Report
                         )
                     ];
                 }
-            }
-            if (isset($result['tableConfig']['extended']['autoload'])) {
-                $result['tableConfig']['extended']['autoload'] = $this->router->generate(
-                    $result['tableConfig']['extended']['autoload']['url'],
-                    array_replace_recursive(
-                        [
-                            'uniqid' => $this->reportDB['uniqid']
-                        ],
-                        $result['tableConfig']['extended']['autoload']['params'] ? $result['tableConfig']['extended']['autoload']['params'] : []
-                    )
-                );
             }
         }
         return $result;
@@ -632,34 +632,6 @@ class Report
         ]);
         $result['pivotLayouts'] = $layouts;
         return $result;
-    }
-
-    private function theadParse($tag)
-    {
-        $tagName = array_keys($tag)[0];
-        $res = '<'.$tagName;
-        $html = false;
-        $keys = array_keys($tag[$tagName]);
-        $firstKey = isset($keys[0]) ? $keys[0] : '';
-        if (is_int($firstKey)) {
-            $res.= '>';
-            foreach ($tag[$tagName] as $t) {
-                $res.= $this->theadParse($t);
-            }
-            $res.= '</'.$tagName.'>';
-        } else {
-            $html = false;
-            foreach ($tag[$tagName] as $key => $val) {
-                if ($key != 'html') {
-                    $res.= ' '.$key.'="'.$val.'"';
-                } else {
-                    $html = $val;
-                }
-            }
-            $res.= '>'.($html != false ? ucwords($this->translator->trans($html)) : '');
-            $res.= '</'.$tagName.'>';
-        }
-        return $res;
     }
 
     private function getDBResult($result, $fields = [])

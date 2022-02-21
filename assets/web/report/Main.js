@@ -20,9 +20,14 @@ class Report extends Component {
         };
         this.getData = this.getData.bind(this);
         this.getQueryText = this.getQueryText.bind(this);
+        this.getMetaData = this.getMetaData.bind(this);
     }
     
     componentDidMount() {
+        this.getMetaData();
+    }
+    
+    getMetaData() {
         axios.get(
             generatePath(window.mfwApp.urls.report.metaData+'/:id', {id: this.props.match.params.id}),
             {
@@ -39,6 +44,18 @@ class Report extends Component {
                 message.error(error);
             }
         });
+    }
+    
+    componentDidUpdate(prev) {
+        if (prev.match.params.id != this.props.match.params.id) {
+            this.setState({
+                report: null,
+                queryText: '',
+                result: null,
+                loading: false
+            });
+            this.getMetaData();
+        }
     }
     
     getData(values) {
@@ -91,8 +108,8 @@ class Report extends Component {
     }
 
     render() {
-        return <React.Fragment>
-            {this.state.report == null ? <Layout.Content><Spin/></Layout.Content> :
+        return (
+            this.state.report == null ? <Layout.Content><Spin/></Layout.Content> :
             <React.Fragment>
                 {this.state.report.formQuery != undefined ? <Layout.Header theme="light">
                     <Query 
@@ -100,7 +117,7 @@ class Report extends Component {
                       title={this.state.report.title}
                       queryText={this.state.queryText}
                       success={this.getData}/>
-                </Layout.Header> : null} 
+                </Layout.Header> : null}
                 <Layout.Content>
                     {this.state.report.results.map((result, i) => {
                         return <TableResult 
@@ -110,8 +127,8 @@ class Report extends Component {
                           data={this.state.result != null ? this.state.result[i]: []}/>
                     })}
                 </Layout.Content>
-            </React.Fragment>}
-        </React.Fragment>
+            </React.Fragment>
+        );
     }
 }
 
