@@ -914,7 +914,8 @@
         "visible": "Visible columns"
     },
     "errors": {
-      "columns_json": "Wrong columns json"
+      "columns_json": "Wrong columns json",
+       "excel": "Excel wrong data"
     },
     "search": "Search",
     "first": "First",

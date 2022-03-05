@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f49f82c05c434ac212d37f7e7f782751",
+    "content-hash": "4e3227fa7109b8f459b9fe5d505e63af",
     "packages": [
         {
             "name": "composer/package-versions-deprecated",
@@ -2952,6 +2952,60 @@
                 "source": "https://github.com/php-fig/simple-cache/tree/master"
             },
             "time": "2017-10-23T01:57:42+00:00"
+        },
+        {
+            "name": "roromix/spreadsheetbundle",
+            "version": "v1.0.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/roromix/SpreadsheetBundle.git",
+                "reference": "27dc331e74f1a025d7fd3d97fa363e829a3d83db"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/roromix/SpreadsheetBundle/zipball/27dc331e74f1a025d7fd3d97fa363e829a3d83db",
+                "reference": "27dc331e74f1a025d7fd3d97fa363e829a3d83db",
+                "shasum": ""
+            },
+            "require": {
+                "phpoffice/phpspreadsheet": "~1.0",
+                "symfony/framework-bundle": "~3.2|~4.0|~5.0|~6.0"
+            },
+            "require-dev": {
+                "sensio/framework-extra-bundle": "~3.0|~4.0|~5.0|~6.0",
+                "symfony/phpunit-bridge": "~3.2|~4.0|~5.0|~6.0",
+                "symfony/symfony": "~3.2|~4.0|~5.0|~6.0"
+            },
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "Roromix\\Bundle\\SpreadsheetBundle\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Romain Harache",
+                    "email": "romain.harache@gmail.com"
+                }
+            ],
+            "description": "This is a Symfony 3.2 to 6 Bundle helps you to read and write Spreadsheet files (including pdf, xls, xlsx, odt, csv), thanks to the PHPSpreadsheet library",
+            "homepage": "https://github.com/roromix/SpreadsheetBundle",
+            "keywords": [
+                "PHPExcel",
+                "bundle",
+                "excel",
+                "spreadsheet",
+                "symfony"
+            ],
+            "support": {
+                "issues": "https://github.com/roromix/SpreadsheetBundle/issues",
+                "source": "https://github.com/roromix/SpreadsheetBundle/tree/v1.0.3"
+            },
+            "time": "2022-02-25T13:34:40+00:00"
         },
         {
             "name": "sensio/framework-extra-bundle",

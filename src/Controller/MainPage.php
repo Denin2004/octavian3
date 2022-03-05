@@ -15,7 +15,7 @@ class MainPage extends AbstractController
     public function index(SiteConfig $config)
     {
         return $this->render(
-            'base.html.twig',
+            'base.web.html.twig',
             [
                 'numeral' => $config->get('numeral')
             ]

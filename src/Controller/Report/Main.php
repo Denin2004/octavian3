@@ -55,7 +55,7 @@ class Main extends Common
                             "mfw_type": "mfw-num"
                         },
                         {
-                            "title": "date._date",
+                            "title": "jackpot.last_paid",
                             "children": [
                                 {
                                     "title": "date._date",

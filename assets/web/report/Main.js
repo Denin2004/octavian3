@@ -37,6 +37,13 @@ class Report extends Component {
             }
         ).then(res => {
             this.setState({report: res.data.report});
+            if ((res.data.report.autoLoad != undefined)&&(res.data.report.autoLoad === false)) {
+                if (res.data.report.formQuery != undefined) {
+                    
+                } else {
+                    this.getData([]);
+                }
+            }
         }).catch(error => {
             if (error.response) {
                 message.error(error);
@@ -71,7 +78,7 @@ class Report extends Component {
                     queryText: this.getQueryText(values),
                     result: res.data.result,
                     loading: false
-                })
+                });
             } else {
                 message.error(this.props.t(res.data.error));
             }
@@ -81,6 +88,9 @@ class Report extends Component {
     }
     
     getQueryText(values) {
+        if (!this.state.report.formQuery) {
+            return '';
+        }
         var text = '';
         Object.keys(this.state.report.formQuery).map(key => {
             switch(this.state.report.formQuery[key].type) {

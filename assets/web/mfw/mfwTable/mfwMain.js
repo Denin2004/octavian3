@@ -3,7 +3,7 @@ import classNames from 'classnames';
 
 import { VariableSizeGrid } from 'react-window';
 import ResizeObserver from 'rc-resize-observer';
-import { Table, Tag, Space, Checkbox, Button } from 'antd';
+import { Table, Tag, Space, Checkbox, Button, Form, Input } from 'antd';
 import { faFileExcel } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
@@ -19,6 +19,7 @@ import MfwDateType from '@app/web/mfw/mfwTable/mfwDateType';
 import MfwDateTimeType from '@app/web/mfw/mfwTable/mfwDateTimeType';
 import MfwDateTimeMilliType from '@app/web/mfw/mfwTable/mfwDateTimeMilliType';
 import MfwColVis from '@app/web/mfw/mfwTable/buttons/mfwColVis';
+import useWithForm from '@app/web/mfw/mfwForm/MfwFormHOC';
 
 const mfwColumnTypes = {
     'mfw-string': MfwStringType,
@@ -34,7 +35,7 @@ const mfwColumnTypes = {
 };
 
 class MfwTable extends Component {
-    
+
     constructor(props){
         super(props);
         this.renderVirtualList = this.renderVirtualList.bind(this);
@@ -52,18 +53,9 @@ class MfwTable extends Component {
         this.perform = this.perform.bind(this);
         this.setVisibleColumns = this.setVisibleColumns.bind(this);
         this.excel = this.excel.bind(this);
-//        this.ref = React.createRef();
         var visible = [],
             currentData = [...this.props.mfwData],
             colGroup = this.props.mfwConfig.extended && this.props.mfwConfig.extended.colGroup ? [this.props.mfwConfig.extended.colGroup] : [];
-        this.props.mfwConfig.tableInit.columns.map((column) => {
-            var dataIndex = column.dataIndex ? column.dataIndex : column.data;
-            if ((column.visible == undefined)||
-                (column.visible && column.visible === true)||
-                (colGroup.findIndex(col => col === dataIndex) != -1)) {
-                visible.push(dataIndex);
-            }
-        });
         if (colGroup.length != 0) {
             colGroup.map((col, index) => {
                 if (!col.order) {
@@ -88,11 +80,33 @@ class MfwTable extends Component {
                 selected: {
                     keys: [],
                     allCount: this.props.mfwConfig.extended && this.props.mfwConfig.extended.colGroup ? this.props.mfwData.length : 0
-                }
+                },
+                columns: [],
+                defaultWidth: 0
             },
             column: {
                 filters: [],
-                visible: []
+                visible: [],
+                list: this.props.mfwConfig.extended && this.props.mfwConfig.extended.thead != undefined ?
+                    [...this.props.mfwConfig.extended.thead.react] : this.props.mfwConfig.tableInit.columns,
+                selectColumn: {
+                    title: () => <Checkbox
+                           indeterminate={this.state.row.selected.keys.length != 0 && this.state.row.selected.keys.length != this.state.row.selected.allCount}
+                           checked={this.state.row.selected.keys.length == this.state.row.selected.allCount && this.state.row.selected.allCount != 0}
+                           onChange={this.selectAllCheck}
+                           />,
+                    dataIndex: 'mfwSelect',
+                    render: this.selectRowRender,
+                    width: 50,
+                    className: 'mfwSelect'
+                },
+                groupColumn: {
+                    title: '',
+                    dataIndex: 'mfwGroup',
+                    render: this.groupRowButton,
+                    width: 0,
+                    className: 'mfwGroup' 
+                }
             },
             groups: {
                totals: [],
@@ -102,30 +116,41 @@ class MfwTable extends Component {
             },
             mount: false
         };
+        this.state.column.list.map((column) => {
+            var dataIndex = column.dataIndex ? column.dataIndex : column.data;
+            if ((column.visible == undefined)||
+                (column.visible && column.visible === true)||
+                (colGroup.findIndex(col => col.name === dataIndex) != -1)) {
+                visible.push(dataIndex);
+            }
+        });
         var conf = this.perform({
-            visible: visible,
-            columns: [...this.props.mfwConfig.tableInit.columns]
+            visible: visible
         });
         this.state.table.head = conf.table.head;
         this.state.column.filters = conf.column.filters;
         this.state.column.visible = conf.column.visible;
+        this.state.row.columns = conf.row.columns;
+        this.state.row.defaultWidth = conf.row.defaultWidth;
         if (this.state.groups.columns.length != 0) {
             this.state.groups.totals = conf.groups.totals;
             currentData.sort((a, b) => {return this.multipleSort(a, b, this.state.groups.columns, this.state.table.head)});
             this.state.groups.data = this.groupCalcAll(currentData, this.state.groups.columns, this.state.groups.totals, []);
             this.state.groups.grid = this.groupGrid(this.state.groups.data);
+            this.state.column.groupColumn.width = this.state.groups.columns.length*16+32; //32 - padding
         }
     }
-    
+
     componentDidMount() {
         this.ref = React.createRef();
+        this.refExcel = React.createRef();
         this.setState({mount: true})
-    }    
-    
+    }
+
     componentWillUnmount() {
         this.ref = null;
         this.setState({mount: false});
-    }        
+    }
 
     componentDidUpdate(prev) {
         if ((prev.loading === true)&&(this.props.loading === false)) {
@@ -155,7 +180,7 @@ class MfwTable extends Component {
                 state.row.selected.allCount = state.groups.columns.length == 0 ? dataSource.length : 0;
                 return state;
             });
-        }        
+        }
     }
 
     perform(data) {
@@ -163,21 +188,29 @@ class MfwTable extends Component {
                 table: {
                     head: []
                 },
+                row: {
+                    columns: [],
+                    defaultWidth: 0
+                },
                 column: {
                     filters: [],
                     visible: data.visible
                 },
                 groups: {
                    totals: []
-                }            
+                }
             },
-            rowColumn = (column) => {
+            rowColumn = (column, parent) => {
                 if (column.children) {
                     column.width = 0;
-                    column.children.map((child) => {
-                        rowColumn(child);
+                    column.children.map(child => {
+                        rowColumn(child, column);
                         column.width += child.width;
                     });
+                    if (column.title != undefined) {
+                        column.title = this.props.t(column.title);
+                    }
+                    res.table.head.push(column);
                     return;
                 }
                 column.types = column.mfw_type ? column.mfw_type.split(',') : ['mfw-string'];
@@ -193,13 +226,13 @@ class MfwTable extends Component {
                 }
                 column.width = column.width ? column.width : mfwColumnTypes['mfw-string'].width;
                 column.align = column.align ? column.align : mfwColumnTypes['mfw-string'].align;
+                res.row.defaultWidth = res.row.defaultWidth + column.width;
                 column.render = (text, record, index) => {return this.cellRender(text, record, index, column)};
                 if (column.mfw_filter) {
                     column.filters = [];
                     column.onFilter = (value, record) => record[column.dataIndex] != null ? record[column.dataIndex].indexOf(value) === 0 : false;
                     res.column.filters.push(column);
                 }
-                column.width = column.width ? column.width : mfwColumnTypes['mfw-string'].width;
                 if (column.mfw_total_group) {
                     res.groups.totals.push(column);
                 }
@@ -207,34 +240,27 @@ class MfwTable extends Component {
                 if (column.title != undefined) {
                     column.title = this.props.t(column.title);
                 }
-                res.table.head.push(column);
+                if (column.dataIndex) {
+                    column.className = column.dataIndex;
+                }
+                if (parent === null) {
+                    res.table.head.push(column);
+                }
+                res.row.columns.push(column);
             };
-        this.props.mfwConfig.tableInit.columns.map((column) => {
-            if (data.visible.findIndex(x => x === (column.dataIndex ? column.dataIndex : column.data)) != -1) {
-                rowColumn(column);
+        this.state.column.list.map((column) => {
+            if ((column.children)||
+               (data.visible.findIndex(x => x === (column.dataIndex ? column.dataIndex : column.data)) != -1)) {
+                rowColumn(column, null);
             }
         });
         if (this.props.mfwConfig.tableInit.select) {
-            var selectColumn = {
-                title: () => <Checkbox
-                       indeterminate={this.state.row.selected.keys.length != 0 && this.state.row.selected.keys.length != this.state.row.selected.allCount}
-                       checked={this.state.row.selected.keys.length == this.state.row.selected.allCount && this.state.row.selected.allCount != 0}
-                       onChange={this.selectAllCheck}
-                       />,
-                dataIndex: 'mfwSelect',
-                render: this.selectRowRender,
-                width: 50
-            };
-            res.table.head.unshift(selectColumn);
+            res.table.head.unshift(this.state.column.selectColumn);
+            res.row.columns.unshift(this.state.column.selectColumn);
         }
         if (this.state.groups.columns.length != 0) {
-            var groupColumn = {
-                title: '',
-                dataIndex: 'mfwGroup',
-                render: this.groupRowButton,
-                width: this.state.groups.columns.length*16+32 //32 - padding
-            };
-            res.table.head.unshift(groupColumn);
+            res.table.head.unshift(this.state.column.groupColumn);
+            res.row.columns.unshift(this.state.column.groupColumn);
         }
         if (res.column.filters.length != 0) {
             this.state.table.currentData.map( row => {
@@ -287,7 +313,7 @@ class MfwTable extends Component {
             });
         }
     }
-    
+
     multipleSort(a, b, orderColumns, rowColumns) {
         var comp = 0;
         orderColumns.map(orderColumn => {
@@ -297,7 +323,7 @@ class MfwTable extends Component {
         });
         return comp;
     }
-    
+
     groupCalcAll(dataSource, colGroup, totals, openGroups) {
         var groups = [];
         dataSource.map((row, index) => {
@@ -305,7 +331,7 @@ class MfwTable extends Component {
         });
         return groups;
     }
-    
+
     groupCalc(dataSource, colGroup, totals, level, index, groups, openGroups) {
         var grp = groups.map(group => group.value).indexOf(dataSource[index][colGroup[level].name]);
         if (grp == -1) {
@@ -335,11 +361,11 @@ class MfwTable extends Component {
         });
         if (level == (colGroup.length-1)) {
             groups[grp].indexes.push(index);
-        } else {    
+        } else {
              this.groupCalc(dataSource, colGroup, totals, level+1, index, groups[grp].subGroups, openGroups);
         }
     }
-    
+
     groupGrid(groups) {
         var grid = [];
         groups.map(group => {
@@ -352,7 +378,7 @@ class MfwTable extends Component {
         });
         return grid;
     }
-    
+
     groupGridDetails(group, grid) {
         group.subGroups.map(subGroup => {
             grid.push({
@@ -360,7 +386,7 @@ class MfwTable extends Component {
             });
             if (subGroup.detailed) {
                 this.groupGridDetails(subGroup, grid);
-            }            
+            }
         });
         if (group.detailed) {
             group.indexes.map(rowIndex => {
@@ -370,74 +396,74 @@ class MfwTable extends Component {
             });
         }
     }
-    
+
     groupRowRender(columnIndex, rowIndex, style) {
         if (this.state.groups.grid[rowIndex].group != undefined) {
-            if (this.state.table.head[columnIndex].dataIndex == this.state.groups.grid[rowIndex].group.dataIndex) {
+            if (this.state.row.columns[columnIndex].dataIndex == this.state.groups.grid[rowIndex].group.dataIndex) {
                 return <div className={classNames('virtual-table-cell', {
                         'virtual-table-cell-last': columnIndex === this.state.table.head.length - 1,
-                      }, 'mfw-align-'+this.state.table.head[columnIndex].align)} style={style}>
-                          {this.state.table.head[columnIndex].render(
-                              this.state.table.currentData[this.state.groups.grid[rowIndex].group.firstIndex][this.state.table.head[columnIndex].dataIndex],
+                      }, 'mfw-align-'+this.state.row.columns[columnIndex].align)} style={style}>
+                          {this.state.row.columns[columnIndex].render(
+                              this.state.table.currentData[this.state.groups.grid[rowIndex].group.firstIndex][this.state.row.columns[columnIndex].dataIndex],
                               this.state.table.currentData[this.state.groups.grid[rowIndex].group.firstIndex],
                               this.state.groups.grid[rowIndex].firstIndex)}
                     </div>;
             }
-            if (this.state.table.head[columnIndex].mfw_total_group) {
-                const totalIndex = this.state.groups.grid[rowIndex].group.totals.map(total => total.column.dataIndex).indexOf(this.state.table.head[columnIndex].dataIndex);
+            if (this.state.row.columns[columnIndex].mfw_total_group) {
+                const totalIndex = this.state.groups.grid[rowIndex].group.totals.map(total => total.column.dataIndex).indexOf(this.state.row.columns[columnIndex].dataIndex);
                 return <div className={classNames('virtual-table-cell', {
-                    'virtual-table-cell-last': columnIndex === this.state.table.head.length - 1,
-                     }, 'mfw-font-bold mfw-align-'+this.state.table.head[columnIndex].align)} style={style}>
-                    { mfwColumnTypes[this.state.table.head[columnIndex].types[0]].renderTotal(
-                        this.state.table.head[columnIndex].mfw_total_group, 
+                    'virtual-table-cell-last': columnIndex === this.state.row.columns.length - 1,
+                     }, 'mfw-font-bold mfw-align-'+this.state.row.columns[columnIndex].align)} style={style}>
+                    { mfwColumnTypes[this.state.row.columns[columnIndex].types[0]].renderTotal(
+                        this.state.row.columns[columnIndex].mfw_total_group,
                         this.state.groups.grid[rowIndex].group.totals[totalIndex].results
                     )}
                     </div>
             }
             if (columnIndex == 0) {
                 return <div className={classNames('virtual-table-cell', {
-                    'virtual-table-cell-last': columnIndex === this.state.table.head.length - 1,
-                     }, 'mfw-align-'+this.state.table.head[columnIndex].align)} style={style}>
-                    {this.state.table.head[columnIndex].render('', this.state.groups.grid[rowIndex], rowIndex)}                     
-                </div>                
+                    'virtual-table-cell-last': columnIndex === this.state.row.columns.length - 1,
+                     }, 'mfw-align-'+this.state.row.columns[columnIndex].align)} style={style}>
+                    {this.state.row.columns[columnIndex].render('', this.state.groups.grid[rowIndex], rowIndex)}
+                </div>
             }
             return <div className={classNames('virtual-table-cell', {
-                'virtual-table-cell-last': columnIndex === this.state.table.head.length - 1,
-                 }, 'mfw-align-'+this.state.table.head[columnIndex].align)} style={style}></div>
+                'virtual-table-cell-last': columnIndex === this.state.row.columns.length - 1,
+                 }, 'mfw-align-'+this.state.row.columns[columnIndex].align)} style={style}></div>
         }
         if (this.state.groups.grid[rowIndex].rowIndex != undefined) {
             return <div className={classNames('virtual-table-cell', {
-                      'virtual-table-cell-last': columnIndex === this.state.table.head.length - 1,
-                    }, 'mfw-align-'+this.state.table.head[columnIndex].align)} style={style}>
-                        {this.state.table.head[columnIndex].render(
-                            this.state.table.currentData[this.state.groups.grid[rowIndex].rowIndex][this.state.table.head[columnIndex].dataIndex],
+                      'virtual-table-cell-last': columnIndex === this.state.row.columns.length - 1,
+                    }, 'mfw-align-'+this.state.row.columns[columnIndex].align)} style={style}>
+                        {this.state.row.columns[columnIndex].render(
+                            this.state.table.currentData[this.state.groups.grid[rowIndex].rowIndex][this.state.row.columns[columnIndex].dataIndex],
                             this.state.table.currentData[this.state.groups.grid[rowIndex].rowIndex],
                             this.state.groups.grid[rowIndex].rowIndex)}
                     </div>
         }
     }
-    
+
     groupRowButton(text, record, index) {
         if (record.group) {
-            return <button type="button" 
+            return <button type="button"
                  style={{marginLeft: record.group.level*16+'px'}}
                  className={classNames('ant-table-row-expand-icon mfw-ant-table-row-expand-icon', record.group.detailed ? 'ant-table-row-expand-icon-expanded' : 'ant-table-row-expand-icon-collapsed')}
                  onClick={() => {this.groupDetails(index)}}></button>;
         }
         return '';
-    }    
-    
+    }
+
     groupDetails(index) {
         this.setState(state => {
             state.groups.grid[index].group.detailed = !state.groups.grid[index].group.detailed;
             state.groups.grid = this.groupGrid(state.groups.data);
             state.row.selected.allCount = state.groups.grid.reduce((acc, row) => {
                 return acc + (row.rowIndex == undefined ? 0 : 1);
-            }, 0);            
+            }, 0);
             return state;
         })
     }
-    
+
     groupSort(a, b, totalIndex, order) {
         return order == 'ascend' ?
             mfwColumnTypes[a.totals[totalIndex].column.types[0]].aggregatorValue(a.totals[totalIndex].column.mfw_total_group, a.totals[totalIndex].results)
@@ -445,11 +471,11 @@ class MfwTable extends Component {
             mfwColumnTypes[b.totals[totalIndex].column.types[0]].aggregatorValue(a.totals[totalIndex].column.mfw_total_group, b.totals[totalIndex].results)
               - mfwColumnTypes[a.totals[totalIndex].column.types[0]].aggregatorValue(b.totals[totalIndex].column.mfw_total_group, a.totals[totalIndex].results);
     }
-    
+
     groupSortSub(group, totalIndex, order) {
         group.subGroups.sort((a, b) => {return this.groupSort(a, b, totalIndex, order);});
         group.subGroups.map(subGroup => {this.groupSortSub(subGroup, totalIndex, order)});
-    }    
+    }
 
     cellRender(text, record, index, column) {
         column.types.map(type => {
@@ -528,10 +554,10 @@ class MfwTable extends Component {
             return this.state.table.width == 0 ? (<React.Fragment/>) : (
                 <VariableSizeGrid
                     className="virtual-grid"
-                    columnCount={this.state.table.head.length}
+                    columnCount={this.state.row.columns.length}
                     columnWidth={(index) => {
-                        const { width } = this.state.table.head[index];
-                        return totalHeight > this.props.scroll.y && index === this.state.table.head.length - 1
+                        const { width } = this.state.row.columns[index];
+                        return totalHeight > this.props.scroll.y && index === this.state.row.columns.length - 1
                              ? width - scrollbarSize - 1
                       : width;
                     }}
@@ -553,10 +579,10 @@ class MfwTable extends Component {
         return this.state.table.width == 0 ? (<React.Fragment/>) : (
             <VariableSizeGrid
                 className="virtual-grid"
-                columnCount={this.state.table.head.length}
+                columnCount={this.state.row.columns.length}
                 columnWidth={(index) => {
-                    const { width } = this.state.table.head[index];
-                    return totalHeight > this.props.scroll.y && index === this.state.table.head.length - 1
+                    const { width } = this.state.row.columns[index];
+                    return totalHeight > this.props.scroll.y && index === this.state.row.columns.length - 1
                          ? width - scrollbarSize - 1
                   : width;
                 }}
@@ -573,10 +599,10 @@ class MfwTable extends Component {
                 {({ columnIndex, rowIndex, style }) => {
                     return (
                     <div className={classNames('virtual-table-cell', {
-                      'virtual-table-cell-last': columnIndex === this.state.table.head.length - 1,
-                    }, 'mfw-align-'+this.state.table.head[columnIndex].align)} style={style}>
-                        {this.state.table.head[columnIndex].render(
-                            rawData[rowIndex][this.state.table.head[columnIndex].dataIndex],
+                      'virtual-table-cell-last': columnIndex === this.state.row.columns.length - 1,
+                    }, 'mfw-align-'+this.state.row.columns[columnIndex].align)} style={style}>
+                        {this.state.row.columns[columnIndex].render(
+                            rawData[rowIndex][this.state.row.columns[columnIndex].dataIndex],
                             rawData[rowIndex],
                             rowIndex)}
                     </div>
@@ -592,6 +618,12 @@ class MfwTable extends Component {
         this.setState((state) => {
             state.table.width = params.width;
             state.table.height = params.height;
+            if (state.table.width > state.row.defaultWidth) {
+                const head = this.ref.current.getElementsByClassName('ant-table-thead');
+                state.row.columns.map(col => {
+                    col.width = head[0].getElementsByClassName(col.dataIndex)[0].offsetWidth;
+                });
+            }
             return state;
         });
     }
@@ -602,46 +634,55 @@ class MfwTable extends Component {
 
     setVisibleColumns(visible) {
         var conf = this.perform({
-            visible: visible,
-            columns: [...this.props.mfwConfig.tableInit.columns]
+            visible: visible
         });
         this.setState( state => {
             state.table.head = conf.table.head;
             state.column.filters = conf.column.filters;
             state.column.visible = conf.column.visible;
+            state.row.columns = conf.row.columns;
+            state.row.defaultWidth = conf.row.defaultWidth;
             if (state.groups.columns.length != 0) {
                 state.groups.totals = conf.groups.totals;
                 state.groups.data = this.groupCalcAll(state.table.currentData, state.groups.columns, state.groups.totals, []);
                 state.groups.grid = this.groupGrid(state.groups.data);
-            }   
+            }
             return state;
         })
     }
-    
+
     excel() {
         var data = {
             data: this.state.groups.columns.length != 0 ? this.state.groups.grid : this.state.table.currentData,
             columns: this.state.table.head,
-            head: this.props.mfwConfig.extended && this.props.mfwConfig.extended.thead ? 
-              this.ref.current.getElementsByClassName('ant-table-thead').outerHTML : false
+            head: this.props.mfwConfig.extended && this.props.mfwConfig.extended.thead ?
+              this.ref.current.getElementsByClassName('ant-table-thead')[0].outerHTML : false
         };
-        console.log(data);
+        this.refExcel.current.value = JSON.stringify(data);
     }
-    
+
     buttons() {
         return <div>{
         this.props.mfwConfig.tableInit.buttons.map((button, i) => {
             if (typeof button === 'string') {
                 switch(button) {
                     case 'mfwColVis':
-                        return <MfwColVis 
-                           key={i} 
+                        return <MfwColVis
+                           key={i}
                            setColVis={this.setVisibleColumns}
                            all={this.props.mfwConfig.tableInit.columns}
                            visible={this.state.column.visible}
                            />;
                     case 'mfwExcel':
-                        return <Button onClick={this.excel} key={i}><FontAwesomeIcon icon={faFileExcel}/></Button>
+                        return <form form={this.props.form}
+                            method="post"
+                            action={window.mfwApp.urls.grid.excel}
+                            target="_blank"
+                            key={i}
+                            >
+                            <input ref={this.refExcel} type="hidden" name="excelData" className="mfw-excel-data"/>
+                            <Button htmlType="submit" onClick={this.excel}><FontAwesomeIcon icon={faFileExcel}/></Button>
+                        </form>
                 }
             }
         })
@@ -672,4 +713,4 @@ class MfwTable extends Component {
     }
 }
 
-export default withTranslation()(MfwTable);
+export default withTranslation()(useWithForm(MfwTable));

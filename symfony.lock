@@ -157,6 +157,9 @@
     "psr/simple-cache": {
         "version": "1.0.1"
     },
+    "roromix/spreadsheetbundle": {
+        "version": "v1.0.3"
+    },
     "sensio/framework-extra-bundle": {
         "version": "5.2",
         "recipe": {

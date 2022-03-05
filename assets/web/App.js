@@ -12,6 +12,7 @@ import {ConfigProvider, message} from 'antd';
 import Login from '@app/web/Login';
 import Main from '@app/web/Main';
 import locales from '@app/web/locales';
+import MfwExcelError from '@app/web/mfw/mfwTable/mfwExcelError';
 
 i18n.use(initReactI18next) // passes i18n down to react-i18next
     .init({
@@ -45,15 +46,12 @@ class App extends Component {
         };
     }
 
-    componentDidMount() {
-
-    }
-
     render() {
         return (
             <ConfigProvider locale={locales[this.state.locale].antd} componentSize="middle"> 
                 <Switch>
                     <Route path="/login" component={Login} />
+                    <Route path="/grid/excel" component={MfwExcelError} />
                     <Route path="*" component={Main} />
                 </Switch>
             </ConfigProvider>
