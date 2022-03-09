@@ -4,8 +4,6 @@ import classNames from 'classnames';
 import { VariableSizeGrid } from 'react-window';
 import ResizeObserver from 'rc-resize-observer';
 import { Table, Tag, Space, Checkbox, Button, Form, Input } from 'antd';
-import { faFileExcel } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import { withTranslation } from 'react-i18next';
 
@@ -19,7 +17,7 @@ import MfwDateType from '@app/web/mfw/mfwTable/mfwDateType';
 import MfwDateTimeType from '@app/web/mfw/mfwTable/mfwDateTimeType';
 import MfwDateTimeMilliType from '@app/web/mfw/mfwTable/mfwDateTimeMilliType';
 import MfwColVis from '@app/web/mfw/mfwTable/buttons/mfwColVis';
-import useWithForm from '@app/web/mfw/mfwForm/MfwFormHOC';
+import MfwExcel from '@app/web/mfw/mfwTable/buttons/mfwExcel';
 
 const mfwColumnTypes = {
     'mfw-string': MfwStringType,
@@ -52,7 +50,6 @@ class MfwTable extends Component {
         this.buttons = this.buttons.bind(this);
         this.perform = this.perform.bind(this);
         this.setVisibleColumns = this.setVisibleColumns.bind(this);
-        this.excel = this.excel.bind(this);
         var visible = [],
             currentData = [...this.props.mfwData],
             colGroup = this.props.mfwConfig.extended && this.props.mfwConfig.extended.colGroup ? [this.props.mfwConfig.extended.colGroup] : [];
@@ -98,14 +95,16 @@ class MfwTable extends Component {
                     dataIndex: 'mfwSelect',
                     render: this.selectRowRender,
                     width: 50,
-                    className: 'mfwSelect'
+                    className: 'mfwSelect mfw-noexcel',
+                    mfw_noexcel: true
                 },
                 groupColumn: {
                     title: '',
                     dataIndex: 'mfwGroup',
                     render: this.groupRowButton,
                     width: 0,
-                    className: 'mfwGroup' 
+                    className: 'mfwGroup  mfw-noexcel',
+                    mfw_noexcel: true
                 }
             },
             groups: {
@@ -143,7 +142,6 @@ class MfwTable extends Component {
 
     componentDidMount() {
         this.ref = React.createRef();
-        this.refExcel = React.createRef();
         this.setState({mount: true})
     }
 
@@ -245,6 +243,9 @@ class MfwTable extends Component {
                 }
                 if (parent === null) {
                     res.table.head.push(column);
+                }
+                if (column.mfw_noexcel != undefined) {
+                    column.className = column.className ? column.className+' mfw-noexcel' : 'mfw-noexcel';
                 }
                 res.row.columns.push(column);
             };
@@ -651,16 +652,6 @@ class MfwTable extends Component {
         })
     }
 
-    excel() {
-        var data = {
-            data: this.state.groups.columns.length != 0 ? this.state.groups.grid : this.state.table.currentData,
-            columns: this.state.table.head,
-            head: this.props.mfwConfig.extended && this.props.mfwConfig.extended.thead ?
-              this.ref.current.getElementsByClassName('ant-table-thead')[0].outerHTML : false
-        };
-        this.refExcel.current.value = JSON.stringify(data);
-    }
-
     buttons() {
         return <div>{
         this.props.mfwConfig.tableInit.buttons.map((button, i) => {
@@ -674,15 +665,12 @@ class MfwTable extends Component {
                            visible={this.state.column.visible}
                            />;
                     case 'mfwExcel':
-                        return <form form={this.props.form}
-                            method="post"
-                            action={window.mfwApp.urls.grid.excel}
-                            target="_blank"
-                            key={i}
-                            >
-                            <input ref={this.refExcel} type="hidden" name="excelData" className="mfw-excel-data"/>
-                            <Button htmlType="submit" onClick={this.excel}><FontAwesomeIcon icon={faFileExcel}/></Button>
-                        </form>
+                        return <MfwExcel key={i} data={() => {return {
+                            data: this.state.groups.columns.length != 0 ? this.state.groups.grid : this.state.table.currentData,
+                            columns: this.state.row.columns.filter(col => col.mfw_noexcel ? false : true),
+                            head: this.props.mfwConfig.extended && this.props.mfwConfig.extended.thead ?
+                                 this.ref.current.getElementsByClassName('ant-table-thead')[0].outerHTML : false
+                        }}}/>;
                 }
             }
         })
@@ -713,4 +701,4 @@ class MfwTable extends Component {
     }
 }
 
-export default withTranslation()(useWithForm(MfwTable));
+export default withTranslation()(MfwTable);

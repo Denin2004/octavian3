@@ -56,6 +56,7 @@ class Main extends Common
                         },
                         {
                             "title": "jackpot.last_paid",
+                            "align": "center",
                             "children": [
                                 {
                                     "title": "date._date",
@@ -71,7 +72,6 @@ class Main extends Common
                         }
                     ]');
         }
-        dump($report);
         if ($repService->isError()) {
             $reportError = $repService->getLastError();
             if ($reportError == '403') {

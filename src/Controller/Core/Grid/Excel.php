@@ -18,13 +18,6 @@ class Excel extends AbstractController
 {
     public function index(Request $request, Factory $excelService, SiteConfig $config)
     {
-        return $this->render(
-            'base.web.html.twig',
-            [
-                'numeral' => $config->get('numeral')
-            ]
-        );
-
         if ($request->request->get('excelData') == null) {
             return $this->render(
                 'base.web.html.twig',
@@ -35,6 +28,13 @@ class Excel extends AbstractController
         }
         $data = json_decode($request->request->get('excelData'), true);
         dump($data);
+/*        return $this->render(
+            'base.web.html.twig',
+            [
+                'numeral' => $config->get('numeral')
+            ]
+        );*/
+
         if ($data == null) {
             return $this->render(
                 'base.web.html.twig',
@@ -43,34 +43,18 @@ class Excel extends AbstractController
                 ]
             );
         }
-//        dump($request->request->get('excelData'), json_decode('{aaaa: gggg}'));
-/*        $form = $this->createForm(GridExel::class);
-        $form->handleRequest($request);
-        if (!$form->isValid()) {
-            $errors = $this->textFormErrors($form);
-            return $this->getTemplate(
-                $request,
-                [
-                    'errors' => $errors,
-                    'module_template_file' => '',
-                    'title' => $this->translator->trans('errors._error'),
-                ]
-            );
-        }
-        $query = $form->getData();
-        $data = json_decode($query['data']);*/
         $objExcel = $excelService->createSpreadsheet();
-/*        $startRow = 1;
-        if (isset($data->addHeader)) {
+        $startRow = 1;
+        if ($data['head'] != false) {
             $tmpfile = tempnam(sys_get_temp_dir(), 'html');
-            file_put_contents($tmpfile, '<?xml version="1.0" encoding="utf-8"?>'.$data->addHeader);
+            file_put_contents($tmpfile, '<?xml version="1.0" encoding="utf-8"?><html>'.$data['head'].'</html>');
             $excelHTMLReader = new Html('HTML');
             $objExcel = $excelHTMLReader->load($tmpfile);
             unlink($tmpfile);
             $objExcel->setActiveSheetIndex(0);
             $aSheet = $objExcel->getActiveSheet();
-            for ($line = 0; $line < $data->addHeaderLines; $line++) {
-                for ($col = 0; $col < count($data->header); $col++) {
+            for ($line = 1; $line <= $data['headLines']; $line++) {
+                for ($col = 0; $col < count($data['columns']); $col++) {
                     $colIndex = Coordinate::stringFromColumnIndex($col+1);
                     $val = $aSheet->getCell($colIndex.($line))->getValue();
                     if ($val != null) {
@@ -84,13 +68,11 @@ class Excel extends AbstractController
                                         ]
                                     ]
                                 ],
-                                'alignment' => [
-                                    'horizontal' => Alignment::HORIZONTAL_CENTER,
-                                    'vertical' => Alignment::VERTICAL_CENTER,
-                                    'wrapText' => true
-                                ],
                                 'font' => [
                                     'bold' => true
+                                ],
+                                'alignment' => [
+                                    'wrapText' => true
                                 ]
                             ]
                         );
@@ -106,13 +88,11 @@ class Excel extends AbstractController
                                         ]
                                     ]
                                 ],
-                                'alignment' => [
-                                    'horizontal' => Alignment::HORIZONTAL_CENTER,
-                                    'vertical' => Alignment::VERTICAL_CENTER,
-                                    'wrapText' => true
-                                ],
                                 'font' => [
                                     'bold' => true
+                                ],
+                                'alignment' => [
+                                    'wrapText' => true
                                 ]
                             ]
                         );
@@ -121,12 +101,89 @@ class Excel extends AbstractController
             }
 
             //$aSheet->insertNewRowBefore(1);
-            $rowNum = $data->addHeaderLines;
+            $rowNum = $data['headLines'];
         } else {
             $objExcel->setActiveSheetIndex(0);
             $aSheet = $objExcel->getActiveSheet();
             $rowNum = 1;
+            foreach ($data['columns'] as $i => $col) {
+                $colIndex = Coordinate::stringFromColumnIndex($i+1);
+                $aSheet->setCellValueExplicit($colIndex.$rowNum, html_entity_decode($col['title'], ENT_QUOTES), DataType::TYPE_STRING);
+                $data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_LEFT;
+                switch ($col['align']) {
+                    case 'right':
+                        $data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_RIGHT;
+                        break;
+                    case 'center':
+                        $data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_CENTER;
+                        break;
+                }
+                $aSheet->getStyle($colIndex.$rowNum)->applyFromArray([
+                    'borders' => [
+                        'allBorders' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => [
+                                'rgb' => '100000'
+                            ]
+                        ]
+                    ],
+                    'font' => [
+                        'bold' => true
+                    ],
+                    'alignment' => [
+                        'wrapText' => true,
+                        'horizontal' => $data['columns'][$i]['aligment']
+                    ]
+                ]);
+            }
         }
+
+        foreach ($data['columns'] as $i => $col) {
+            if (!isset($data['columns'][$i]['aligment'])) {
+                $data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_LEFT;
+                switch ($col['align']) {
+                    case 'right':
+                        $data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_RIGHT;
+                        break;
+                    case 'center':
+                        $data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_CENTER;
+                        break;
+                }
+            }
+            $data['columns'][$i]['type'] = DataType::TYPE_STRING;
+            $data['columns'][$i]['format'] = [
+                'formatCode' => ''
+            ];
+            if (in_array('mfw-int', $col['types'])) {
+                $data['columns'][$i]['format']['formatCode'] = $config->get('xls_int_format');
+                $data['columns'][$i]['type'] = DataType::TYPE_NUMERIC;
+            }
+            if (in_array('mfw-num', $col['types'])) {
+                $data['columns'][$i]['format']['formatCode'] = $config->get('xls_number_format');
+                $data['columns'][$i]['type'] = DataType::TYPE_NUMERIC;
+            }
+            if (in_array('mfw-native-int', $col['types'])) {
+                $data['columns'][$i]['type'] = DataType::TYPE_NUMERIC;
+            }
+            $data['columns'][$i]['format'] = [
+                'formatCode' => ''
+            ];
+            if (isset($col['mfw_total'])) {
+                $data['columns'][$i]['total'] = [
+                    'sum' => 0,
+                    'cnt' => 0
+                ];
+            }
+        }
+        dump($data['columns']);
+        return $this->render(
+            'base.web.html.twig',
+            [
+                'numeral' => $config->get('numeral')
+            ]
+        );
+
+        /*
         $startRow = $rowNum + 1;
         $col = 0;
         $aSheet->mergeCells('A1:'.Coordinate::stringFromColumnIndex(count($data->header) - 1).'1');
@@ -447,7 +504,8 @@ class Excel extends AbstractController
             ++$col;
         }*/
         $aSheet->setTitle('Report');
-        $file = explode(',', $data->title);
+        //$file = explode(',', $data->title);
+        $file = ['test'];
         $writer = $excelService->createWriter($objExcel, 'Xls');
         $response = $excelService->createStreamedResponse($writer);
         $dispositionHeader = $response->headers->makeDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, implode('_', $file).'.xls');
