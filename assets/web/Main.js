@@ -65,6 +65,7 @@ class Main extends Component {
                         </Menu.SubMenu>
                         <Menu.Item key="10" icon={<Link to={generatePath('/report/page/:id', {id: 47})}><FontAwesomeIcon icon={faBug}/><div className="ant-menu-title-content">Test report</div></Link>}/>
                         <Menu.Item key="11" icon={<Link to={generatePath('/report/page/:id', {id: 97})}><FontAwesomeIcon icon={faBug}/><div className="ant-menu-title-content">Test report</div></Link>}/>
+                        <Menu.Item key="12" icon={<Link to={generatePath('/report/page/:id', {id: 115})}><FontAwesomeIcon icon={faBug}/><div className="ant-menu-title-content">Test report</div></Link>}/>
                     </Menu>
                 </Layout.Sider>
                 <Layout>

@@ -655,23 +655,23 @@ class MfwTable extends Component {
     buttons() {
         return <div>{
         this.props.mfwConfig.tableInit.buttons.map((button, i) => {
-            if (typeof button === 'string') {
-                switch(button) {
-                    case 'mfwColVis':
-                        return <MfwColVis
-                           key={i}
-                           setColVis={this.setVisibleColumns}
-                           all={this.props.mfwConfig.tableInit.columns}
-                           visible={this.state.column.visible}
-                           />;
-                    case 'mfwExcel':
-                        return <MfwExcel key={i} data={() => {return {
-                            data: this.state.groups.columns.length != 0 ? this.state.groups.grid : this.state.table.currentData,
-                            columns: this.state.row.columns.filter(col => col.mfw_noexcel ? false : true),
-                            head: this.props.mfwConfig.extended && this.props.mfwConfig.extended.thead ?
-                                 this.ref.current.getElementsByClassName('ant-table-thead')[0].outerHTML : false
-                        }}}/>;
-                }
+            const btnName = typeof button === 'string' ? button : button.extend;
+            switch(btnName) {
+                case 'mfwColVis':
+                    return <MfwColVis
+                       key={i}
+                       setColVis={this.setVisibleColumns}
+                       all={this.props.mfwConfig.tableInit.columns}
+                       visible={this.state.column.visible}
+                       />;
+                case 'mfwExcel':
+                    return <MfwExcel key={i} data={() => {return {
+                        groups: this.state.groups.columns.length != 0 ? this.state.groups.grid : false,
+                        data: this.state.table.currentData,
+                        columns: this.state.row.columns.filter(col => col.mfw_noexcel ? false : true),
+                        head: this.props.mfwConfig.extended && this.props.mfwConfig.extended.thead ?
+                             this.ref.current.getElementsByClassName('ant-table-thead')[0].outerHTML : false
+                    }}}/>;
             }
         })
         }</div>

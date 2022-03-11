@@ -12,6 +12,7 @@ use App\Form\React\ReactForm;
 use App\Form\React\ReactHiddenType;
 use App\Form\React\ReactTextType;
 use App\Form\Report\LocationView;
+use App\Form\Report\LocationRequest;
 use App\Form\Report\CurrencyView;
 use App\Form\Report\Period;
 
@@ -37,6 +38,10 @@ class Query extends ReactForm
         'MfwPeriod' => [
             'view' => Period::class,
             'request' => Period::class
+        ],
+        'MfwChoice' => [
+            'view' => ChoiceView::class,
+            'request' => ChoiceRequest::class
         ]
     ];
 

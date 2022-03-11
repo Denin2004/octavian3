@@ -1,3 +1,10 @@
+machinesDashboard:
+    path: /dashboard/{active}
+    controller: App\Controller\Machines\Dashboard::main
+    defaults:
+        active: monitoring_summary
+    methods: [GET]
+
 machineInfo:
     path: /info/{modal}/{id}
     controller: App\Controller\Machines\Info::info

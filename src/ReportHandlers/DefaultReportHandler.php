@@ -196,7 +196,9 @@ class DefaultReportHandler
 
     public function mfwLinkFldConfig(&$column)
     {
+        dump('!!!!');
         $column['type'] = isset($column['numSort'])&& $column['numSort'] == true ? '' : 'html';
+        $column['translate'] = isset($column['action']['textLink']);
     }
 
     public function mfwIconFldConfig(&$column)
@@ -206,6 +208,9 @@ class DefaultReportHandler
 
     public function mfwLinkFldResult(&$res, $key, $column, $row)
     {
+        if (isset($column['action']['textLink'])) {
+            $res[$key][$column['data']] = $column['action']['textLink'];
+        }
         $res[$key][$column['data'].'_LINK'] = $this->getLink(
             $column['action'],
             $row,

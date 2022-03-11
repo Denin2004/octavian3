@@ -9,8 +9,7 @@ class MfwDateTimeType {
     }
 
     static sorter(a, b, column) {
-        return a[column.dataIndex].localeCompare(b[column.dataIndex]);
-        return a[column.dataIndex+'_SORT'].localeCompare(b[column.dataIndex+'_SORT']); //!!!!!
+        return a[column.dataIndex+'_SORT'].localeCompare(b[column.dataIndex+'_SORT']);
     }
     
     static renderFilter(row, column) {

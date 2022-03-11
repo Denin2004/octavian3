@@ -1,11 +1,14 @@
 import React, {Component} from 'react';
 
+import { faCheck } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 class MfwCheckboxType {
     static width = 60;
     static align = 'center';
     
     static render(text, record, index, column) {
-        return <Checkbox>Checkbox</Checkbox>;
+        return record[column.dataIndex] == column.checked ? <FontAwesomeIcon icon={faCheck}/> : null;
     }
 
     static sorter(a, b, column) {

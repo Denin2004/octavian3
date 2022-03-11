@@ -36,6 +36,7 @@ class MfwExcel extends Component {
             data.head = head.outerHTML;
             data.headLines = head.children.length;
         }
+        console.log(data);
         this.refExcel.current.value = JSON.stringify(data);
     }
     

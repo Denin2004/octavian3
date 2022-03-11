@@ -17,7 +17,7 @@ class LocationChoice extends Component {
         };
     }
     
-    render() {
+    render() {        
         return (
             <Form.Item name={this.props.field.name}
               label={this.props.t(this.props.field.label)}

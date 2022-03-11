@@ -137,3 +137,7 @@ services:
         class: App\Form\React\ReactTextType
         tags: [form.type]
 
+    App\Form\Report\ChoiceView:
+       class: App\Form\Report\ChoiceView
+       arguments: ['@App\Services\MyACP\MyACP']
+       tags: [form.type]

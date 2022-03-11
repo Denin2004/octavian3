@@ -16,6 +16,10 @@ use App\Services\SiteConfig\SiteConfig;
 
 class Excel extends AbstractController
 {
+    private $data;
+    private $rowNum;
+    private $sheet;
+
     public function index(Request $request, Factory $excelService, SiteConfig $config)
     {
         if ($request->request->get('excelData') == null) {
@@ -26,39 +30,38 @@ class Excel extends AbstractController
                 ]
             );
         }
-        $data = json_decode($request->request->get('excelData'), true);
-        dump($data);
-/*        return $this->render(
+        $this->data = json_decode($request->request->get('excelData'), true);
+/*        dump($this->data);
+        return $this->render(
             'base.web.html.twig',
             [
                 'numeral' => $config->get('numeral')
             ]
-        );*/
+        );
 
-        if ($data == null) {
+        if ($this->data == null) {
             return $this->render(
                 'base.web.html.twig',
                 [
                     'numeral' => $config->get('numeral')
                 ]
             );
-        }
+        }*/
         $objExcel = $excelService->createSpreadsheet();
-        $startRow = 1;
-        if ($data['head'] != false) {
+        if ($this->data['head'] != false) {
             $tmpfile = tempnam(sys_get_temp_dir(), 'html');
-            file_put_contents($tmpfile, '<?xml version="1.0" encoding="utf-8"?><html>'.$data['head'].'</html>');
+            file_put_contents($tmpfile, '<?xml version="1.0" encoding="utf-8"?><html>'.$this->data['head'].'</html>');
             $excelHTMLReader = new Html('HTML');
             $objExcel = $excelHTMLReader->load($tmpfile);
             unlink($tmpfile);
             $objExcel->setActiveSheetIndex(0);
-            $aSheet = $objExcel->getActiveSheet();
-            for ($line = 1; $line <= $data['headLines']; $line++) {
-                for ($col = 0; $col < count($data['columns']); $col++) {
+            $this->sheet = $objExcel->getActiveSheet();
+            for ($line = 1; $line <= $this->data['headLines']; $line++) {
+                for ($col = 0; $col < count($this->data['columns']); $col++) {
                     $colIndex = Coordinate::stringFromColumnIndex($col+1);
-                    $val = $aSheet->getCell($colIndex.($line))->getValue();
+                    $val = $this->sheet->getCell($colIndex.($line))->getValue();
                     if ($val != null) {
-                        $aSheet->getStyle($colIndex.($line))->applyFromArray(
+                        $this->sheet->getStyle($colIndex.($line))->applyFromArray(
                             [
                                 'borders' => [
                                     'allBorders' => [
@@ -78,7 +81,7 @@ class Excel extends AbstractController
                         );
                     } else {
                         // Bug Spreadsheet !!!!
-                        $aSheet->getStyle($colIndex.($line))->applyFromArray(
+                        $this->sheet->getStyle($colIndex.($line))->applyFromArray(
                             [
                                 'borders' => [
                                     'allBorders' => [
@@ -99,26 +102,26 @@ class Excel extends AbstractController
                     }
                 }
             }
-
-            //$aSheet->insertNewRowBefore(1);
-            $rowNum = $data['headLines'];
+            $this->rowNum = $this->data['headLines'];
         } else {
             $objExcel->setActiveSheetIndex(0);
-            $aSheet = $objExcel->getActiveSheet();
-            $rowNum = 1;
-            foreach ($data['columns'] as $i => $col) {
+            $this->sheet = $objExcel->getActiveSheet();
+            $this->rowNum = 1;
+            foreach ($this->data['columns'] as $i => $col) {
                 $colIndex = Coordinate::stringFromColumnIndex($i+1);
-                $aSheet->setCellValueExplicit($colIndex.$rowNum, html_entity_decode($col['title'], ENT_QUOTES), DataType::TYPE_STRING);
-                $data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_LEFT;
+                $this->sheet->setCellValueExplicit($colIndex.$this->rowNum, html_entity_decode($col['title'], ENT_QUOTES), DataType::TYPE_STRING);
+                $this->data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_LEFT;
                 switch ($col['align']) {
                     case 'right':
-                        $data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_RIGHT;
+                        $this->data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_RIGHT;
                         break;
                     case 'center':
-                        $data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_CENTER;
+                        $this->data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_CENTER;
                         break;
                 }
-                $aSheet->getStyle($colIndex.$rowNum)->applyFromArray([
+                $this->sheet->getColumnDimension($colIndex)->setAutoSize(true);
+                $this->sheet->getRowDimension($this->rowNum)->setRowHeight(40);
+                $this->sheet->getStyle($colIndex.$this->rowNum)->applyFromArray([
                     'borders' => [
                         'allBorders' => [
                             'borderStyle' => Border::BORDER_THIN,
@@ -132,378 +135,238 @@ class Excel extends AbstractController
                     ],
                     'alignment' => [
                         'wrapText' => true,
-                        'horizontal' => $data['columns'][$i]['aligment']
+                        'horizontal' => $this->data['columns'][$i]['aligment'],
+                        'vertical' => Alignment::VERTICAL_CENTER
                     ]
                 ]);
             }
+            $this->sheet->freezePane('A'.($this->rowNum+1));
+            $this->rowNum++;
         }
 
-        foreach ($data['columns'] as $i => $col) {
-            if (!isset($data['columns'][$i]['aligment'])) {
-                $data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_LEFT;
+        foreach ($this->data['columns'] as $i => $col) {
+            if (!isset($this->data['columns'][$i]['aligment'])) {
+                $this->data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_LEFT;
                 switch ($col['align']) {
                     case 'right':
-                        $data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_RIGHT;
+                        $this->data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_RIGHT;
                         break;
                     case 'center':
-                        $data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_CENTER;
+                        $this->data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_CENTER;
                         break;
                 }
             }
-            $data['columns'][$i]['type'] = DataType::TYPE_STRING;
-            $data['columns'][$i]['format'] = [
+            $this->data['columns'][$i]['type'] = DataType::TYPE_STRING;
+            $this->data['columns'][$i]['format'] = [
                 'formatCode' => ''
             ];
             if (in_array('mfw-int', $col['types'])) {
-                $data['columns'][$i]['format']['formatCode'] = $config->get('xls_int_format');
-                $data['columns'][$i]['type'] = DataType::TYPE_NUMERIC;
+                $this->data['columns'][$i]['format']['formatCode'] = $config->get('xls_int_format');
+                $this->data['columns'][$i]['type'] = DataType::TYPE_NUMERIC;
             }
             if (in_array('mfw-num', $col['types'])) {
-                $data['columns'][$i]['format']['formatCode'] = $config->get('xls_number_format');
-                $data['columns'][$i]['type'] = DataType::TYPE_NUMERIC;
+                $this->data['columns'][$i]['format']['formatCode'] = $config->get('xls_number_format');
+                $this->data['columns'][$i]['type'] = DataType::TYPE_NUMERIC;
             }
             if (in_array('mfw-native-int', $col['types'])) {
-                $data['columns'][$i]['type'] = DataType::TYPE_NUMERIC;
+                $this->data['columns'][$i]['type'] = DataType::TYPE_NUMERIC;
             }
-            $data['columns'][$i]['format'] = [
-                'formatCode' => ''
-            ];
+            if (in_array('mfw-checkbox', $col['types'])&& isset($col['checked'])) {
+                $this->data['columns'][$i]['checkbox'] = true;
+                $this->data['columns'][$i]['aligment'] = Alignment::HORIZONTAL_CENTER;
+            }
             if (isset($col['mfw_total'])) {
-                $data['columns'][$i]['total'] = [
+                $this->data['columns'][$i]['total'] = [
                     'sum' => 0,
                     'cnt' => 0
                 ];
             }
         }
-        dump($data['columns']);
+/*        dump($this->data);
         return $this->render(
             'base.web.html.twig',
             [
                 'numeral' => $config->get('numeral')
             ]
-        );
-
-        /*
-        $startRow = $rowNum + 1;
-        $col = 0;
-        $aSheet->mergeCells('A1:'.Coordinate::stringFromColumnIndex(count($data->header) - 1).'1');
-        $aSheet->setCellValueExplicit('A1', htmlspecialchars_decode($data->title, ENT_QUOTES), DataType::TYPE_STRING);
-        $aSheet->getStyle('A1')->applyFromArray(
-            [
-                'borders' => [
-                    'allBorders' => [
-                        'borderStyle' => Border::BORDER_NONE,
-                    ],
-                ],
-                'alignment' => [
-                    'horizontal' => Alignment::HORIZONTAL_CENTER,
-                    'vertical' => Alignment::VERTICAL_CENTER,
-                    'wrapText' => true,
-                ],
-                'font' => [
-                    'bold' => true,
-                ],
-            ]
-        );
-        foreach ($data->header as $key => $header) {
-            $colIndex = Coordinate::stringFromColumnIndex($col + 1);
-            if (isset($header->title)) {
-                $aSheet->setCellValueExplicit($colIndex.$rowNum, html_entity_decode($header->title, ENT_QUOTES), DataType::TYPE_STRING);
-            }
-            $aSheet->getColumnDimension($colIndex)->setAutoSize(true);
-            if (isset($header->mfw_total_group)) {
-                $data->header[$key]->total_group = [
-                    'oper' => $header->mfw_total_group,
-                    'total' => 0,
-                    'cnt' => 0,
-                ];
-            } else {
-                $data->header[$key]->total_group = [
-                    'oper' => '',
-                ];
-            }
-            if (isset($header->mfw_total)) {
-                $data->header[$key]->total = [
-                    'oper' => $header->mfw_total,
-                    'total' => 0,
-                    'cnt' => 0,
-                ];
-            } else {
-                $data->header[$key]->total = [
-                    'oper' => '',
-                ];
-            }
-            $data->header[$key]->xls_format = [
-                'formatCode' => ''];
-            $data->header[$key]->alignment = Alignment::HORIZONTAL_LEFT;
-            if (isset($header->mfw_format)) {
-                if ($header->mfw_format == $this->siteConfig->get('js_number_format')) {
-                    $data->header[$key]->format = 'number';
-                    $data->header[$key]->xls_format['formatCode'] = $this->siteConfig->get('xls_number_format');
-                }
-                if ($header->mfw_format == $this->siteConfig->get('js_int_format')) {
-                    if (($data->header[$key]->mfw_type == 'mfw-checkbox')||(isset($data->header[$key]->checked))) {
-                        $data->header[$key]->mfw_type = 'mfw-checkbox';
-                        $data->header[$key]->format = 'checkbox';
-                        $data->header[$key]->xls_format['formatCode'] = NumberFormat::FORMAT_TEXT;
-                    } else {
-                        $data->header[$key]->format = 'int';
-                        $data->header[$key]->xls_format['formatCode'] = $this->siteConfig->get('xls_int_format');
+        );*/
+        if ($this->data['groups']) {
+            foreach ($this->data['groups'] as $row) {
+                if (isset($row['group'])) {
+                    $groupColIndex = array_search($row['group']['dataIndex'], array_column($this->data['columns'], 'dataIndex'));
+                    $colIndex = Coordinate::stringFromColumnIndex($groupColIndex+1);
+                    $this->sheet->setCellValueExplicit($colIndex.$this->rowNum, $row['group']['value'], DataType::TYPE_STRING);
+                    foreach ($this->data['columns'] as $i => $col) {
+                        $colIndex = Coordinate::stringFromColumnIndex($i+1);
+                        $this->sheet->getStyle($colIndex.$this->rowNum)->applyFromArray([
+                            'fill' => [
+                                'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                                'startColor' => [
+                                    'rgb' => 'CCFFCC'
+                                ]
+                            ]
+                        ]);
+                        if ($row['group']['detailed']) {
+                            $this->sheet->getStyle($colIndex.$this->rowNum)->applyFromArray([
+                                'borders' => [
+                                    'bottom' => [
+                                        'borderStyle' => Border::BORDER_THIN,
+                                        'color' => [
+                                            'rgb' => '000000'
+                                        ]
+                                    ]
+                                ]
+                            ]);
+                        }
                     }
+                    foreach ($row['group']['totals'] as $total) {
+                        $totalColIndex = array_search($total['column']['dataIndex'], array_column($this->data['columns'], 'dataIndex'));
+                        $colIndex = Coordinate::stringFromColumnIndex($totalColIndex+1);
+                        switch (array_key_first($total['results'])) {
+                            case 'sum':
+                                $this->sheet->setCellValueExplicit($colIndex.$this->rowNum, $total['results']['sum'], DataType::TYPE_NUMERIC);
+                                $this->sheet->getStyle($colIndex.$this->rowNum)->applyFromArray([
+                                    'font' => [
+                                        'bold' => true
+                                    ],
+                                    'alignment' => [
+                                        'wrapText' => true,
+                                        'horizontal' => $this->data['columns'][$totalColIndex]['aligment']
+                                    ],
+                                    'numberFormat' => $this->data['columns'][$totalColIndex]['format']
+                                ]);
+                                break;
+                            case 'cnt':
+                                $this->sheet->setCellValueExplicit($colIndex.$this->rowNum, $total['results']['cnt'], DataType::TYPE_NUMERIC);
+                                $this->sheet->getStyle($colIndex.$this->rowNum)->applyFromArray([
+                                    'font' => [
+                                        'bold' => true
+                                    ],
+                                    'alignment' => [
+                                        'wrapText' => true,
+                                        'horizontal' => $this->data['columns'][$totalColIndex]['aligment']
+                                    ],
+                                    'numberFormat' => [
+                                        'formatCode' => $config->get('xls_int_format')
+                                    ]
+                                ]);
+                                break;
+                            case 'avg':
+                                $this->sheet->setCellValueExplicit($colIndex.$this->rowNum, $total['results']['avg'], DataType::TYPE_NUMERIC);
+                                $this->sheet->getStyle($colIndex.$this->rowNum)->applyFromArray([
+                                    'font' => [
+                                        'bold' => true
+                                    ],
+                                    'alignment' => [
+                                        'wrapText' => true,
+                                        'horizontal' => $this->data['columns'][$totalColIndex]['aligment']
+                                    ],
+                                    'numberFormat' => $this->data['columns'][$totalColIndex]['format']
+                                ]);
+                                break;
+                        }
+                    }
+                    $this->sheet->getRowDimension($this->rowNum)->setRowHeight(30);
+                    $this->rowNum++;
                 }
-            } else {
-                if (isset($header->mfw_type) && ($header->mfw_type == 'mfw-duration')) {
-                    $data->header[$key]->format = 'duration';
-                    $data->header[$key]->xls_format['formatCode'] = '';
-                } else {
-                    $data->header[$key]->format = '';
-                    $data->header[$key]->xls_format['formatCode'] = NumberFormat::FORMAT_TEXT;
+                if (isset($row['rowIndex'])) {
+                    dump($this->data['data'][$row['rowIndex']]);
+                    $this->showRow($this->data['data'][$row['rowIndex']]);
                 }
             }
-            if (isset($header->className)) {
-                if (strpos($header->className, 'dt-body-right') !== false) {
-                    $data->header[$key]->alignment = Alignment::HORIZONTAL_RIGHT;
-                }
-                if (strpos($header->className, 'dt-body-center') !== false) {
-                    $data->header[$key]->alignment = Alignment::HORIZONTAL_CENTER;
-                }
+        } else {
+            foreach ($this->data['data'] as $row) {
+                $this->showRow($row);
             }
-            ++$col;
         }
-        $lastCol = Coordinate::stringFromColumnIndex($col);
-        $aSheet->getStyle('A'.$rowNum.':'.$lastCol.$rowNum)->applyFromArray(
-            [
-                'borders' => [
-                    'allBorders' => [
-                        'borderStyle' => Border::BORDER_THIN,
-                        'color' => [
-                            'rgb' => '000000'],
-                    ],
-                ],
-                'alignment' => [
-                    'horizontal' => Alignment::HORIZONTAL_CENTER,
-                    'vertical' => Alignment::VERTICAL_CENTER,
-                    'wrapText' => true,
-                ],
-                'font' => [
-                    'bold' => true,
-                ]
-            ]
-        );
-        $aSheet->freezePane('A'.($rowNum + 1));
-
-        $aSheet->getRowDimension($rowNum)->setRowHeight(30);
-        ++$rowNum;
-        $useGroup = $data->groupCol != '';
-        $groupValue = null;
-        if ($useGroup) {
-            $groupName = $data->groupCol;
-        }
-        foreach ($data->body as $row) {
-            if (($useGroup === true) and (($row->$groupName != $groupValue)or($groupValue === null))) {
-                if ($rowNum != $startRow) {
-                    $this->printFooter($aSheet, $rowNum, $data->header);
-                    ++$rowNum;
-                }
-                $groupValue = $row->$groupName;
-                $aSheet->mergeCells('A'.$rowNum.':'.$lastCol.$rowNum);
-                $aSheet->setCellValueExplicit('A'.$rowNum, $groupValue, DataType::TYPE_STRING);
-                $aSheet->getStyle('A'.$rowNum)->applyFromArray(
-                    [
+        foreach ($this->data['columns'] as $i => $col) {
+            if (!isset($column['mfw_total'])) {
+                continue;
+            }
+            $colIndex = Coordinate::stringFromColumnIndex($i + 1);
+            switch ($column['mfw_total']) {
+                case 'sum':
+                    $this->sheet->setCellValueExplicit($colIndex.$this->rowNum, $col['total']['sum'], DataType::TYPE_NUMERIC);
+                    $aSheet->getStyle($colIndex.$this->rowNum)->applyFromArray([
                         'alignment' => [
-                            'horizontal' => Alignment::HORIZONTAL_LEFT,
-                            'wrapText' => true,
+                            'horizontal' => $col['alignment'],
+                            'wrapText' => true
                         ],
                         'font' => [
-                            'bold' => true,
+                            'bold' => true
                         ],
-                    ]
-                );
-                $aSheet->getRowDimension($rowNum)->setRowHeight(40);
-                ++$rowNum;
-            }
-            $col = 0;
-
-            foreach ($data->header as $key => $header) {
-                $colIndex = Coordinate::stringFromColumnIndex($col + 1);
-                $name = $header->name;
-                switch ($header->format) {
-                    case 'checkbox':
-                        $aSheet->setCellValueExplicit(
-                            $colIndex.$rowNum,
-                            property_exists($data->header[$key], 'checked_text') ? ($this->translator->trans($data->header[$key]->checked_text) == $row->$name ? 'V' : '') : $row->$name,
-                            DataType::TYPE_STRING
-                        );
-                        break;
-                    case '':
-                    case 'duration':
-                        $aSheet->setCellValueExplicit($colIndex.$rowNum, $this->unformat($header, $row->$name), DataType::TYPE_STRING);
-                        break;
-                    case 'number':
-                    case 'int':
-                        $aSheet->setCellValueExplicit($colIndex.$rowNum, $this->unformat($header, $row->$name), DataType::TYPE_NUMERIC);
-                        break;
-                }
-//                $aSheet->setCellValue   ($colIndex.$rowNum, $this->unformat($header, $row->$name));
-                $aSheet->getStyle($colIndex.$rowNum)->applyFromArray(
-                    [
-                        'alignment' => [
-                            'horizontal' => $header->alignment,
-                            'wrapText' => true,
-                        ],
-                        'numberFormat' => $header->xls_format
-                    ]
-                );
-                switch ($header->total_group['oper']) {
-                    case 'sum-duration':
-                        $header->total_group['total'] = $header->total_group['total'] +
-                            $this->durationUnformat($row->$name);
-                        break;
-                    case 'sum':
-                        $header->total_group['total'] = $header->total_group['total'] +
-                            $this->unformat($header, $row->$name);
-                        break;
-                    case 'count':
-                        $header->total_group['cnt'] ++;
-                        break;
-                    case 'avg':
-                        $header->total_group['total'] = $header->total_group['total'] +
-                            $this->unformat($header, $row->$name);
-                        ++$header->total_group['cnt'];
-                        break;
-                }
-                switch ($header->total['oper']) {
-                    case 'sum-duration':
-                        $header->total['total'] = $header->total['total'] +
-                            $this->durationUnformat($row->$name);
-                        break;
-                    case 'sum':
-                        $header->total['total'] = $header->total['total'] +
-                            $this->unformat($header, $row->$name);
-                        break;
-                    case 'count':
-                        $header->total['cnt'] ++;
-                        break;
-                    case 'avg':
-                        $header->total['total'] = $header->total['total'] +
-                            $this->unformat($header, $row->$name);
-                        ++$header->total['cnt'];
-                        break;
-                }
-                ++$col;
-            }
-            $aSheet->getStyle('A'.$rowNum.':'.$lastCol.$rowNum)->applyFromArray(
-                [
-                    'borders' => [
-                        'allBorders' => [
-                            'borderStyle' => Border::BORDER_THIN,
-                            'color' => [
-                                'rgb' => '000000'
-                            ],
-                        ],
-                    ],
-                ]
-            );
-            ++$rowNum;
-        }
-        if ($useGroup === true) {
-            $this->printFooter($aSheet, $rowNum, $data->header);
-            ++$rowNum;
-        }
-
-        $col = 0;
-        foreach ($data->header as $header) {
-            $colIndex = Coordinate::stringFromColumnIndex($col + 1);
-            switch ($header->total['oper']) {
-                case 'sum':
-                    $aSheet->setCellValueExplicit($colIndex.$rowNum, $header->total['total'], DataType::TYPE_NUMERIC);
-                    $aSheet->getStyle($colIndex.$rowNum)->applyFromArray(
-                        [
-                            'alignment' => [
-                                'horizontal' => $header->alignment,
-                                'wrapText' => true,
-                            ],
-                            'font' => [
-                                'bold' => true,
-                            ],
-                            'numberFormat' => $header->xls_format,
-                        ]
-                    );
+                        'numberFormat' => $col['format']
+                    ]);
                     break;
                 case 'sum-duration':
-                    $aSheet->setCellValueExplicit($colIndex.$rowNum, $this->secsToDuration($header->total['total']), DataType::TYPE_STRING);
-                    $aSheet->getStyle($colIndex.$rowNum)->applyFromArray(
-                        [
-                            'alignment' => [
-                                'horizontal' => $header->alignment,
-                                'wrapText' => true,
-                            ],
-                            'font' => [
-                                'bold' => true,
-                            ],
+                    $hours = floor($col['total']['sum'] / 3600);
+                    $mins = floor($col['total']['sum'] / 60 % 60);
+                    $secs = floor($col['total']['sum'] % 60);
+                    $this->sheet->setCellValueExplicit($colIndex.$this->rowNum, sprintf('%02d:%02d:%02d', $hours, $mins, $secs), DataType::TYPE_STRING);
+                    $this->sheet->getStyle($colIndex.$this->rowNum)->applyFromArray([
+                        'alignment' => [
+                            'horizontal' => $col['alignment'],
+                            'wrapText' => true
+                        ],
+                        'font' => [
+                            'bold' => true
                         ]
-                    );
+                    ]);
                     break;
                 case 'count':
-                    $aSheet->setCellValueExplicit($colIndex.$rowNum, $header->total['cnt'], DataType::TYPE_NUMERIC);
-                    $header->total['cnt'] = 0;
-                    $aSheet->getStyle($colIndex.$rowNum)->applyFromArray(
-                        [
-                            'alignment' => [
-                                'horizontal' => $header->alignment,
-                                'wrapText' => true,
-                            ],
-                            'font' => [
-                                'bold' => true,
-                            ],
-                            'numberFormat' => [
-                                'formatCode' => $this->siteConfig->get('xls_int_format')
-                            ],
+                    $this->sheet->setCellValueExplicit($colIndex.$this->rowNum, $col['total']['cnt'], DataType::TYPE_NUMERIC);
+                    $this->sheet->getStyle($colIndex.$this->rowNum)->applyFromArray([
+                        'alignment' => [
+                            'horizontal' => $col['alignment'],
+                            'wrapText' => true
+                        ],
+                        'font' => [
+                            'bold' => true
+                        ],
+                        'numberFormat' => [
+                            'formatCode' => $this->siteConfig->get('xls_int_format')
                         ]
-                    );
+                    ]);
                     break;
                 case 'avg':
-                    if ($header->total['cnt'] != 0) {
-                        $aSheet->setCellValueExplicit($colIndex.$rowNum, $header->total['total'] / $header->total['cnt'], DataType::TYPE_NUMERIC);
-                        $aSheet->getStyle($colIndex.$rowNum)->applyFromArray(
-                            [
-                                'alignment' => [
-                                    'horizontal' => $header->alignment,
-                                    'wrapText' => true,
-                                ],
-                                'font' => [
-                                    'bold' => true,
-                                ],
-                                'numberFormat' => $header->xls_format,
-                            ]
-                        );
+                    if ($col['total']['cnt'] != 0) {
+                        $this->sheet->setCellValueExplicit($colIndex.$this->rowNum, $col['total']['sum'] / $col['total']['cnt'], DataType::TYPE_NUMERIC);
+                        $this->heet->getStyle($colIndex.$this->rowNum)->applyFromArray([
+                            'alignment' => [
+                                'horizontal' => $col['alignment'],
+                                'wrapText' => true
+                            ],
+                            'font' => [
+                                'bold' => true
+                            ],
+                            'numberFormat' => $this->siteConfig->get('xls_number_format')
+                        ]);
                     }
                     break;
             }
-            $aSheet->getStyle($colIndex.$rowNum)->applyFromArray(
-                [
-                    'borders' => [
-                        'left' => [
-                            'borderStyle' => Border::BORDER_THIN,
-                            'color' => [
-                                'rgb' => 'FFFFFF']
-                        ],
-                        'right' => [
-                            'borderStyle' => Border::BORDER_THIN,
-                            'color' => [
-                                'rgb' => 'FFFFFF']
-                        ],
-                        'bottom' => [
-                            'borderStyle' => Border::BORDER_THIN,
-                            'color' => [
-                                'rgb' => 'FFFFFF']
+            $this->sheet->getStyle($colIndex.$this->rowNum)->applyFromArray([
+                'borders' => [
+                    'left' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => [
+                            'rgb' => 'FFFFFF'
+                        ]
+                    ],
+                    'right' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => [
+                            'rgb' => 'FFFFFF'
+                        ]
+                    ],
+                    'bottom' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => [
+                            'rgb' => 'FFFFFF'
                         ]
                     ]
                 ]
-            );
-            ++$col;
-        }*/
-        $aSheet->setTitle('Report');
+            ]);
+        }
+        $this->sheet->setTitle('Report');
         //$file = explode(',', $data->title);
         $file = ['test'];
         $writer = $excelService->createWriter($objExcel, 'Xls');
@@ -517,162 +380,66 @@ class Excel extends AbstractController
         return $response;
     }
 
-    protected function printFooter($aSheet, $rowNum, $headers)
+    protected function showRow($row)
     {
-        $col = 0;
-        foreach ($headers as $header) {
-            $colIndex = Coordinate::stringFromColumnIndex($col + 1);
-            switch ($header->total_group['oper']) {
-                case 'sum-duration':
-                    $aSheet->setCellValueExplicit($colIndex.$rowNum, $this->secsToDuration($header->total_group['total']), DataType::TYPE_STRING);
-                    $header->total_group['total'] = 0;
-                    $aSheet->getStyle($colIndex.$rowNum)->applyFromArray(
-                        [
-                            'alignment' => [
-                                'horizontal' => $header->alignment,
-                                'vertical' => Alignment::VERTICAL_TOP,
-                                'wrapText' => true,
-                            ],
-                            'font' => [
-                                'bold' => true,
-                            ],
-                        ]
-                    );
-                    break;
-                case 'sum':
-                    $aSheet->setCellValueExplicit($colIndex.$rowNum, $header->total_group['total'], DataType::TYPE_NUMERIC);
-                    $header->total_group['total'] = 0;
-                    $aSheet->getStyle($colIndex.$rowNum)->applyFromArray(
-                        [
-                            'alignment' => [
-                                'horizontal' => $header->alignment,
-                                'vertical' => Alignment::VERTICAL_TOP,
-                                'wrapText' => true,
-                            ],
-                            'font' => [
-                                'bold' => true,
-                            ],
-                            'numberFormat' => $header->xls_format,
-                        ]
-                    );
-                    break;
-                case 'count':
-                    $aSheet->setCellValueExplicit($colIndex.$rowNum, $header->total_group['cnt'], DataType::TYPE_NUMERIC);
-                    $header->total_group['cnt'] = 0;
-                    $aSheet->getStyle($colIndex.$rowNum)->applyFromArray(
-                        [
-                            'alignment' => [
-                                'horizontal' => $header->alignment,
-                                'vertical' => Alignment::VERTICAL_TOP,
-                                'wrapText' => true,
-                            ],
-                            'font' => [
-                                'bold' => true,
-                            ],
-                            'numberFormat' => [
-                                'formatCode' => $this->siteConfig->get('xls_int_format')],
-                        ]
-                    );
-                    break;
-                case 'avg':
-                    if ($header->total_group['cnt'] != 0) {
-                        $aSheet->setCellValueExplicit(
-                            $colIndex.$rowNum,
-                            $header->total_group['sum'] / $header->total_group['cnt'],
-                            DataType::TYPE_STRING
-                        );
-                        $header->total_group['cnt'] = 0;
-                        $header->total_group['sum'] = 0;
-                        $aSheet->getStyle($colIndex.$rowNum)->applyFromArray(
-                            [
-                                'alignment' => [
-                                    'horizontal' => $header->alignment,
-                                    'vertical' => Alignment::VERTICAL_TOP,
-                                    'wrapText' => true,
-                                ],
-                                'font' => [
-                                    'bold' => true,
-                                ],
-                                'numberFormat' => $header->xls_format,
-                            ]
-                        );
-                    }
-                    break;
+        foreach ($this->data['columns'] as $key => $column) {
+            $colIndex = Coordinate::stringFromColumnIndex($key+1);
+            dump($column);
+            if (isset($column['checkbox'])) {
+                $this->sheet->setCellValueExplicit(
+                    $colIndex.$this->rowNum,
+                    $row[$column['dataIndex']] == $column['checked'] ? 'V' : '',
+                    DataType::TYPE_STRING
+                );
+            } else {
+                $this->sheet->setCellValueExplicit(
+                    $colIndex.$this->rowNum,
+                    $row[$column['dataIndex']],
+                    $column['type']
+                );
             }
-            $aSheet->getStyle($colIndex.$rowNum)->applyFromArray(
+            $this->sheet->getStyle($colIndex.$this->rowNum)->applyFromArray(
                 [
+                    'alignment' => [
+                        'horizontal' => $column['aligment'],
+                        'wrapText' => true,
+                    ],
+                    'numberFormat' => $column['format'],
                     'borders' => [
                         'left' => [
                             'borderStyle' => Border::BORDER_THIN,
                             'color' => [
-                                'rgb' => 'FFFFFF',],
+                                'rgb' => '000000']
                         ],
                         'right' => [
                             'borderStyle' => Border::BORDER_THIN,
                             'color' => [
-                                'rgb' => 'FFFFFF',],
+                                'rgb' => '000000']
                         ],
                         'bottom' => [
                             'borderStyle' => Border::BORDER_THIN,
                             'color' => [
-                                'rgb' => 'FFFFFF',],
-                        ],
-                    ],
+                                'rgb' => '000000']
+                        ]
+                    ]
                 ]
             );
-            ++$col;
+            if (isset($column['total'])) {
+                switch ($column['mfw_total']) {
+                    case 'sum-duration':
+                    case 'sum':
+                        $this->data['columns'][$key]['total']['sum'] = $this->data['columns'][$key]['total']['sum'] + $row[$column['dataIndex']];
+                        break;
+                    case 'count':
+                        $this->data['columns'][$key]['total']['cnt']++;
+                        break;
+                    case 'avg':
+                        $this->data['columns'][$key]['total']['sum'] = $this->data['columns'][$key]['total']['sum'] + $row[$column['dataIndex']];
+                        $this->data['columns'][$key]['total']['cnt']++;
+                        break;
+                }
+            }
         }
-        $aSheet->getRowDimension($rowNum)->setRowHeight(30);
-    }
-
-    protected function formatValue($header, $value)
-    {
-        switch ($header->format) {
-            case 'number':
-                return $this->getNumberFormat($value);
-            case 'int':
-                return $this->getIntegerFormat($value);
-        }
-        return $value;
-    }
-
-    protected function unformat($header, $value)
-    {
-        switch ($header->format) {
-            case 'number':
-                return $this->numberUnformat($value);
-            case 'int':
-                return $this->integerUnformat($value);
-        }
-        if ($header->xls_format['formatCode'] == NumberFormat::FORMAT_TEXT) {
-            return $value;
-        }
-        return $value;
-    }
-
-    protected function numberUnformat($number)
-    {
-        $number = preg_replace('/^[^\d]-+/', '', $number);
-        $number = str_replace([
-            $this->siteConfig->get('php_thousand_sep'),
-            $this->siteConfig->get('php_dec_point')], ['', '.'], $number);
-        settype($number, 'float');
-        return $number;
-    }
-
-    protected function integerUnformat($number)
-    {
-        $number = preg_replace('/^[^\d]-+/', '', $number);
-        $number = str_replace([$this->siteConfig->get('php_thousand_sep')], [''], $number);
-        settype($number, 'int');
-        return $number;
-    }
-
-    protected function durationUnformat($duration)
-    {
-        $duration = preg_replace('/^[^\d]-+/', '', $duration);
-        $duration = $this->timeToInt($duration);
-        settype($duration, 'int');
-        return $duration;
+        $this->rowNum++;
     }
 }

@@ -7,7 +7,6 @@ class MfwDateTimeMilliType {
     }
 
     static sorter(a, b, column) {
-        return a[column.dataIndex].localeCompare(b[column.dataIndex]);
         return a[column.dataIndex+'_SORT'].localeCompare(b[column.dataIndex+'_SORT']);
     }
     

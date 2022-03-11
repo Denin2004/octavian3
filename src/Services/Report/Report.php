@@ -403,6 +403,21 @@ class Report
                         $this->reportDB['results'][$key]['tableConfig']['extended']['subTableURL'] = $this->generateURL($result['tableConfig']['extended']['subTableURL']);
                     }*/
                 }
+                foreach ($result['tableConfig']['tableInit']['columns'] as $key => $col) {
+                    if (isset($col['mfw_type'])) {
+                        $types = explode(',', $col['mfw_type']);
+                        foreach ($types as $type) {
+                            $method = $this->getMethodName($type).'FldConfig';
+                            if (method_exists($handler, $method)) {
+                                $handler->$method($result['tableConfig']['tableInit']['columns'][$key]);
+                                if ($handler->isError()) {
+                                    $this->lastError = $handler->getLastError();
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
         return $this->reportDB['results'];
@@ -474,6 +489,7 @@ class Report
 
     protected function tableResult($handler, $result)
     {
+        dump('111111');
         foreach ($result['tableConfig']['tableInit']['columns'] as $key => $col) {
             if (isset($col['title'])) {
                 $result['tableConfig']['tableInit']['columns'][$key]['title'] = $this->translator->trans($col['title']);
