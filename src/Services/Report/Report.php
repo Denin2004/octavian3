@@ -234,7 +234,6 @@ class Report
             }
             $this->reportDB['handler']->afterResult($res[$resKey], $result);
             if (isset($result['tableConfig'])) {
-                $rows = isset($res[$resKey]['result']) ? $res[$resKey]['result'] : $res[$resKey];
                 $clcFields = [];
                 if (isset($result['tableConfig']['tableInit']['buttons']) &&
                     (in_array('mfwClcFields', $result['tableConfig']['tableInit']['buttons']))) {
@@ -252,7 +251,11 @@ class Report
                         $clcFields[$key]['rpn']->parse(implode('', $formula['tags']));
                     }
                 }
-                $this->tableFormatResult($result, $rows, $clcFields);
+                if (isset($res[$resKey]['result'])) {
+                    $this->tableFormatResult($result, $res[$resKey]['result'], $clcFields);
+                } else {
+                    $this->tableFormatResult($result, $res[$resKey], $clcFields);
+                }
             }
             if (isset($result['pivotConfig'])) {
                 $frmtRes = $this->pivotFormatResult($result, $res);
@@ -299,7 +302,6 @@ class Report
                 return $res;
             }
             if (isset($result['tableConfig'])) {
-                $rows = isset($res['result']) ? $res['result'] : $res;
                 $clcFields = [];
                 if (isset($result['tableConfig']['tableInit']['buttons']) &&
                     (in_array('mfwClcFields', $result['tableConfig']['tableInit']['buttons']))) {
@@ -317,7 +319,11 @@ class Report
                         $clcFields[$key]['rpn']->parse(implode('', $formula['tags']));
                     }
                 }
-                $frmtRes = $this->tableFormatResult($result, $rows, $clcFields, $controller);
+                if (isset($res['result'])) {
+                    $frmtRes = $this->tableFormatResult($result, $res['result'], $clcFields, $controller);
+                } else {
+                    $frmtRes = $this->tableFormatResult($result, $res, $clcFields, $controller);
+                }
                 if ($frmtRes === false) {
                     return $res;
                 }
@@ -403,14 +409,14 @@ class Report
                         $this->reportDB['results'][$key]['tableConfig']['extended']['subTableURL'] = $this->generateURL($result['tableConfig']['extended']['subTableURL']);
                     }*/
                 }
-                foreach ($result['tableConfig']['tableInit']['columns'] as $key => $col) {
+                foreach ($result['tableConfig']['tableInit']['columns'] as $colKey => $col) {
                     if (isset($col['mfw_type'])) {
                         $types = explode(',', $col['mfw_type']);
                         foreach ($types as $type) {
                             $method = $this->getMethodName($type).'FldConfig';
-                            if (method_exists($handler, $method)) {
-                                $handler->$method($result['tableConfig']['tableInit']['columns'][$key]);
-                                if ($handler->isError()) {
+                            if (method_exists($this->reportDB['handler'], $method)) {
+                                $this->reportDB['handler']->$method($this->reportDB['results'][$key]['tableConfig']['tableInit']['columns'][$colKey]);
+                                if ($this->reportDB['handler']->isError()) {
                                     $this->lastError = $handler->getLastError();
                                     return false;
                                 }
@@ -489,7 +495,6 @@ class Report
 
     protected function tableResult($handler, $result)
     {
-        dump('111111');
         foreach ($result['tableConfig']['tableInit']['columns'] as $key => $col) {
             if (isset($col['title'])) {
                 $result['tableConfig']['tableInit']['columns'][$key]['title'] = $this->translator->trans($col['title']);

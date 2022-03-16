@@ -18,7 +18,6 @@ class ChoiceView extends ReactChoiceType
 
     protected function getChoices($options)
     {
-        dump($options);
         $choices = [];
         if (isset($options['attr']['field']['data'])) {
             if (isset($options['attr']['field']['data']['choices'])) {

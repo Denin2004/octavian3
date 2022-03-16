@@ -2,6 +2,7 @@ import React, {Component} from 'react';
 
 class MfwLinkType {
     static render(text, record, index, column) {
+        console.log(column);
         return <a>{text}</a>;
     }
     

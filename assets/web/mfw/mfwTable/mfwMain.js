@@ -653,7 +653,7 @@ class MfwTable extends Component {
     }
 
     buttons() {
-        return <div>{
+        return <Space>{
         this.props.mfwConfig.tableInit.buttons.map((button, i) => {
             const btnName = typeof button === 'string' ? button : button.extend;
             switch(btnName) {
@@ -674,7 +674,7 @@ class MfwTable extends Component {
                     }}}/>;
             }
         })
-        }</div>
+        }</Space>
     }
 
     render() {
