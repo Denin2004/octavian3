@@ -218,6 +218,9 @@ class MfwTable extends Component {
                     if ((column.orderable == undefined || column.orderable === true)&&(mfwColumnTypes[type].sorter != undefined)) {
                         column.sorter = (a, b) => {return mfwColumnTypes[type].sorter(a, b, column)};
                     }
+                    if ((type == 'mfw-link')&&(column.action.ajax != undefined)) {
+                        column.response = this.props.ajaxResponse;
+                    }
                 });
                 if ((column.orderable == undefined || column.orderable === true)&&(column.sorter == undefined)) {
                     column.sorter = (a, b) => {return mfwColumnTypes['mfw-string'].sorter(a, b, column)};

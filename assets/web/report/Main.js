@@ -8,6 +8,7 @@ import { withTranslation } from 'react-i18next';
 
 import Query from '@app/web/report/Query';
 import TableResult from '@app/web/report/result/Table';
+import {ajaxResponse} from '@app/web/report/ajaxResponse/declare';
 
 class Report extends Component {
     constructor(props){
@@ -16,17 +17,20 @@ class Report extends Component {
             report: null,
             queryText: '',
             result: null,
-            loading: false
+            loading: false,
+            ajaxResponse: []
         };
         this.getData = this.getData.bind(this);
         this.getQueryText = this.getQueryText.bind(this);
         this.getMetaData = this.getMetaData.bind(this);
+        this.showAjaxResponse = this.showAjaxResponse.bind(this);
+        this.setAjaxResponse = this.setAjaxResponse.bind(this);
     }
-    
+
     componentDidMount() {
         this.getMetaData();
     }
-    
+
     getMetaData() {
         axios.get(
             generatePath(window.mfwApp.urls.report.metaData+'/:id', {id: this.props.match.params.id}),
@@ -39,7 +43,7 @@ class Report extends Component {
             this.setState({report: res.data.report});
             if ((res.data.report.autoLoad != undefined)&&(res.data.report.autoLoad === false)) {
                 if (res.data.report.formQuery != undefined) {
-                    
+
                 } else {
                     this.getData([]);
                 }
@@ -52,7 +56,7 @@ class Report extends Component {
             }
         });
     }
-    
+
     componentDidUpdate(prev) {
         if (prev.match.params.id != this.props.match.params.id) {
             this.setState({
@@ -64,7 +68,7 @@ class Report extends Component {
             this.getMetaData();
         }
     }
-    
+
     getData(values) {
         this.setState({loading: true});
         axios({
@@ -86,7 +90,7 @@ class Report extends Component {
             message.error(error.toString());
         });
     }
-    
+
     getQueryText(values) {
         if (!this.state.report.formQuery) {
             return '';
@@ -117,26 +121,37 @@ class Report extends Component {
         return text;
     }
 
+    showAjaxResponse() {
+        const response = ajaxResponse[this.state.report.ajaxResponse ? this.state.report.ajaxResponse : 'default'];
+        return <response reponse={this.state.ajaxResponse}/>
+    }
+    
+    setAjaxResponse(response) {
+        console.log(response);
+    }
+
     render() {
         return (
             this.state.report == null ? <Layout.Content><Spin/></Layout.Content> :
             <React.Fragment>
                 {this.state.report.formQuery != undefined ? <Layout.Header theme="light">
-                    <Query 
-                      query={this.state.report.formQuery} 
+                    <Query
+                      query={this.state.report.formQuery}
                       title={this.state.report.title}
                       queryText={this.state.queryText}
                       success={this.getData}/>
                 </Layout.Header> : null}
                 <Layout.Content>
                     {this.state.report.results.map((result, i) => {
-                        return <TableResult 
+                        return <TableResult
                           key={i}
-                          tableConfig={result.tableConfig} 
-                          loading={this.state.loading} 
+                          tableConfig={result.tableConfig}
+                          loading={this.state.loading}
+                          ajaxResponse={this.setAjaxResponse}
                           data={this.state.result != null ? this.state.result[i]: []}/>
                     })}
                 </Layout.Content>
+                {this.showAjaxResponse()}
             </React.Fragment>
         );
     }

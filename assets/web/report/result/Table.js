@@ -17,6 +17,7 @@ class TableResult extends Component {
                 mfwConfig={this.props.tableConfig}
                 mfwData={this.props.data}
                 loading={this.props.loading}
+                ajaxResponse={this.props.ajaxResponse}
                 scroll={{
                     y: 300,
                     x: '100vw'

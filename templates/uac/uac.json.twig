@@ -11,6 +11,7 @@
                 ]
             }
         },
+        {% include '/uac/machines.json.twig' %},
         "report.all": {
         {% for rep in reports %}
             "{{rep.NAME}}": {

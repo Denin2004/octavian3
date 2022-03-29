@@ -1,0 +1,202 @@
+"machine.machines": {
+    "common.dashboard": {
+        "access": false,
+        "routes": [
+            "machinesDashboard"
+        ]
+    },
+    "common.widgets": {
+        "common.start_dashboard": {
+            "access": false,
+            "routes": [
+                "machinesWidget"
+            ]
+        },
+        "findata.win.net_location_last_7": {
+            "access": false,
+            "routes": [
+                "locationNetWinWidget"
+            ]
+        },
+        "machine.top_payouts_24": {
+            "access": false,
+            "routes": [
+                "machinesWidgetPayouts"
+            ]
+        },
+        "location.occupancy_24": {
+            "access": false,
+            "routes": [
+                "locationWidgetOccupancy"
+            ]
+        },
+        "machine.service_requests.self_name": {
+            "access": false,
+            "routes": [
+                "machinesRequestsWidget"
+            ]
+        }
+    },
+    "machine.fast_find": {
+        "access": false,
+        "routes": [
+            "machineFastFind"
+        ]
+    },
+    "machine._info": {
+        "access": false,
+        "routes": [
+            "machineInfo",
+            "machineEvents24",
+            "machineJPAssigned",
+            "glmStatistics",
+            "softwareVersion",
+            "gamesConfiguration",
+            "machineConfiguration",
+            "machineJackpot",
+            "machineRestartPTM",
+            "machineRestartUCB",
+            "machineRamClearUCB",
+            "machineLockup",
+            "machineLockBillAcceptor",
+            "machineMeters",
+            "machineFinance",
+            "machineJackpots",
+            "machineSetSAS",
+            "machineSetPlayerModal",
+            "machineSetPlayer",
+            "machineInfoGamesConfiguration",
+            "machineRequestConfiguration",
+            "machineCheckRequst",
+            "machinesUCBUpdateDetails",
+            "signInfo",
+            "signEvents",
+            "getSignCfg",
+            "testOctavideo"
+        ]
+    },
+    "common.actions": {
+        "machine.meter.actions": {
+            "access": false,
+            "routes": [
+                "machineMetersEdit",
+                "machineMetersPost",
+                "billsReconDetail"
+            ]
+        },
+        "machine.gaming_day.close": {
+            "access": false,
+            "routes": [
+                "machinesCloseGamingDaysModal",
+                "machinesCloseGamingDays"
+            ]
+        },
+        "tournament.actions": {
+            "access": false,
+            "routes": [
+                "tournamentStart",
+                "tournamentStop"
+            ]
+        },
+        "findata.bills.actions": {
+            "access": false,
+            "routes": [
+                "locationSections",
+                "billsForce",
+                "billsCancel",
+                "machinesLockUnlockSelected",
+                "billsDropSelected",
+                "billsForceSelected",
+                "billsCancelSelected",
+                "billsChangeCurrency",
+                "billNominals"
+            ]
+        },
+        "findata.coin.actions": {
+            "access": false,
+            "routes": [
+                "locationSections",
+                "coinsForce",
+                "coinsCancel",
+                "machinesLockUnlockSelected",
+                "coinsDropSelected",
+                "coinsForceSelected",
+                "coinsCancelSelected"
+            ]
+        },
+        "event.actions": {
+            "access": false,
+            "routes": [
+                "machinesEventTypesModal",
+                "machinesEventTypesSet",
+                "machinesEvAnalysisDeltas"
+            ]
+        },
+        "report_titles.recalculate_netwin_location" : {
+            "access": false,
+            "routes": [
+                "machinesRecalculateNetwin"
+            ]
+        }
+    },
+    "machine.service_requests.self_name": {
+        "machine.service_requests.actions.view": {
+            "access": false,
+            "routes": [
+                "machinesViewRequestModal",
+                "machinesViewRequestHistory",
+                "machineServiceRequests"
+            ]
+        },
+        "machine.service_requests.actions.create": {
+            "access": false,
+            "routes": [
+                "machinesNewRequestModal",
+                "machinesNewRequestPost",
+                "machinesNewRequestCompAction"
+            ]
+        },
+        "machine.service_requests.actions.edit": {
+            "access": false,
+            "routes": [
+                "machinesEditRequestModal",
+                "machinesEditRequestPost",
+                "machinesEditRequestCompAction",
+                "machinesEditRequestRepAction"
+            ]
+        },
+        "machine.service_requests.failure_components_actions": {
+            "access": false,
+            "routes": [
+                "machinesCompLibModal",
+                "machinesCompLibPost",
+                "machinesCompLibDelete",
+                "machinesNewCompRefresh",
+                "machinesEditCompRefresh"
+            ]
+        },
+        "machine.service_requests.repair_types_actions": {
+            "access": false,
+            "routes": [
+                "machinesRepLibModal",
+                "machinesRepLibPost",
+                "machinesRepLibDelete",
+                "machinesRepRefresh"
+            ]
+        }
+    }
+    {% if role_id is defined %}
+    ,"report.reports": {
+        {{ render(controller('App\\Controller\\UserManager\\WebRoles::reportsByEntity',{role_id: role_id, entity_id: 1})) }}
+    }
+    {% endif %}    
+    ,
+    "machine.grp_actions._grp_actions": {
+        "access": false,
+        "routes": [
+            "machinesGroupActions",
+            "machinesUpdateUCBs",
+            "machinesDelUCBVersions"
+        ]
+    }
+}
