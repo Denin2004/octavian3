@@ -5,6 +5,7 @@ import { Spin, Layout, message } from 'antd';
 
 import axios from 'axios';
 import { withTranslation } from 'react-i18next';
+import moment from 'moment-timezone';
 
 import Query from '@app/web/report/Query';
 import TableResult from '@app/web/report/result/Table';
@@ -18,7 +19,11 @@ class Report extends Component {
             queryText: '',
             result: null,
             loading: false,
-            ajaxResponse: []
+            ajaxResponse: {
+                success: true,
+                key: 0,
+                data: []
+            }
         };
         this.getData = this.getData.bind(this);
         this.getQueryText = this.getQueryText.bind(this);
@@ -122,12 +127,14 @@ class Report extends Component {
     }
 
     showAjaxResponse() {
-        const response = ajaxResponse[this.state.report.ajaxResponse ? this.state.report.ajaxResponse : 'default'];
-        return <response reponse={this.state.ajaxResponse}/>
+        const Response = ajaxResponse[this.state.report.ajaxResponse ? this.state.report.ajaxResponse : 'default'];
+        return <Response response={this.state.ajaxResponse}/>
     }
     
     setAjaxResponse(response) {
-        console.log(response);
+        /*check for report refresh*/
+        response.key = this.state.ajaxResponse.key + 1;
+        this.setState({ajaxResponse: response});
     }
 
     render() {

@@ -1,5 +1,3 @@
-import moment from 'moment-timezone';
-
 class MfwDateTimeType {
     static width = 160;
     static align = 'left';

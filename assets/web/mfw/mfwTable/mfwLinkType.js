@@ -6,13 +6,14 @@ import axios from 'axios';
 class MfwLinkType {
     static render(text, record, index, column) {
         return column.response != undefined ? <a onClick={() => {
-            axios({url: record[column.dataIndex+'_LINK'], 
+            axios({
+                url: record[column.dataIndex+'_LINK'], 
                 method: column.action.attrs && column.action.attrs['data-mfw_method'] ? column.action.attrs['data-mfw_method'] : 'get',
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
             }).then(res => {
-                this.response(res.data);
+                column.response(res.data);
             }).catch(error => {
                 message.error(error.toString());
             });            

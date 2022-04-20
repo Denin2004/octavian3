@@ -27,7 +27,9 @@ class Info extends AbstractController
             return new JsonResponse([
                 'success' => true,
                 'data' => [
+                    [
                     'machineInfo' => $info
+                    ]
                 ]
             ]);
     }
