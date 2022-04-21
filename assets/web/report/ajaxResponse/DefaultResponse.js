@@ -3,7 +3,7 @@ import {Modal} from 'antd';
 
 import { withTranslation } from 'react-i18next';
 
-import MachineInfo from '@app/web/machine/Info';
+import MachineInfo from '@app/web/machine/info/Main';
 
 class DefaultResponse extends Component {
     constructor(props){
@@ -18,8 +18,7 @@ class DefaultResponse extends Component {
             this.setState({response: {...this.props.response}});
             if (this.props.response.success === false) {
                 message.error(this.props.t(this.props.response.error));
-            }
-            
+            }            
         }
     }
 
@@ -27,7 +26,16 @@ class DefaultResponse extends Component {
         return this.state.success === false ? null : ( this.state.response.data.map( (response, index) => {
             switch(Object.keys(response)[0]) {
                 case 'machineInfo':
-                    return <Modal key={index} visible={true} closable={true}>
+                    return <Modal 
+                        key={index} 
+                        visible={true} 
+                        closable={true}
+                        footer={null}
+                        onCancel={() => this.setState(state => {
+                            state.response.data.splice(index, 1);
+                            return state;
+                        })}
+                        width="90%">
                         <MachineInfo info={response.machineInfo}/>
                     </Modal>;
             }

@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {Route, Switch, Redirect, Link, withRouter, generatePath} from 'react-router-dom';
 
-import { Layout, Menu, Spin, message } from 'antd';
+import { Layout, Menu, Spin, message, Modal } from 'antd';
 
 import { faGem, faCrown, faMoneyBillAlt, faUsers, faTv, faTools, faBug } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -11,11 +11,16 @@ import { withTranslation } from 'react-i18next';
 import axios from 'axios';
 
 import Report from '@app/web/report/Main';
+import MachineInfo from '@app/web/machine/info/Main';
 
 class Main extends Component {
     constructor(props){
         super(props);
-        this.state = {loading: true}
+        this.state = {
+            loading: true,
+            machInfo: null
+        };
+        this.showMachine = this.showMachine.bind(this);
     }
 
     componentDidMount() {
@@ -46,6 +51,31 @@ class Main extends Component {
             }
         });
     }
+    
+    showMachine() {
+        axios.get(
+            '/machines/info/1/777777787',
+            {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            }
+        ).then(res => {
+            if (res.data.success) {
+                this.setState({
+                    machInfo: res.data.data[0].machineInfo
+                });
+            } else {
+                message.error(this.props.t(res.data.error));
+            }
+        }).catch(error => {
+            if (error.response && error.response.data) {
+                message.error(this.props.t(error.response.data.error));
+            } else {
+                message.error(error.toString());
+            }
+        });
+    }
 
     render() {
         return (
@@ -63,6 +93,7 @@ class Main extends Component {
                             <Menu.Item key="8">Option 7</Menu.Item>
                             <Menu.Item key="9">Option 8</Menu.Item>
                         </Menu.SubMenu>
+                        <Menu.Item key="13" icon={<FontAwesomeIcon icon={faBug}/>} onClick={this.showMachine}/>                        
                         <Menu.Item key="10" icon={<Link to={generatePath('/report/page/:id', {id: 47})}><FontAwesomeIcon icon={faBug}/><div className="ant-menu-title-content">Test report</div></Link>}/>
                         <Menu.Item key="11" icon={<Link to={generatePath('/report/page/:id', {id: 97})}><FontAwesomeIcon icon={faBug}/><div className="ant-menu-title-content">Test report</div></Link>}/>
                         <Menu.Item key="12" icon={<Link to={generatePath('/report/page/:id', {id: 115})}><FontAwesomeIcon icon={faBug}/><div className="ant-menu-title-content">Test report</div></Link>}/>
@@ -78,6 +109,15 @@ class Main extends Component {
                     </Switch>
                     }
                 </Layout>
+                { this.state.machInfo != null ? <Modal 
+                        visible={true} 
+                        closable={true}
+                        footer={null}
+                        onCancel={() => this.setState({machInfo: null})}
+                        width="90%">
+                        <MachineInfo info={this.state.machInfo}/>
+                    </Modal> : null
+                }
             </Layout>
         )
     }

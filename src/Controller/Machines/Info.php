@@ -24,13 +24,17 @@ class Info extends AbstractController
             $info['status'][0]['PTM_VERSION'] = $versions[1];
         }
         $info['status'][0]['UCB_VERSION'] = $versions[0];
-            return new JsonResponse([
-                'success' => true,
-                'data' => [
-                    [
+
+        $info['status'] = $info['status'][0];
+        $info['params'] = $info['params'][0];
+        $info['egm_status'] = isset($info['egm_status'][0]) ? $info['egm_status'][0] : [];
+        return new JsonResponse([
+            'success' => true,
+            'data' => [
+                [
                     'machineInfo' => $info
-                    ]
                 ]
-            ]);
+            ]
+        ]);
     }
 }
